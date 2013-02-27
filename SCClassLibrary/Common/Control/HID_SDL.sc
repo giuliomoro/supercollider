@@ -1,5 +1,7 @@
 HID_SDL {
 
+	classvar <running = false;
+
 	classvar <deviceList;
 	classvar <deviceNames;
 
@@ -10,7 +12,10 @@ HID_SDL {
 	}
 
 	*buildDeviceList{
-		var devlist = this.prbuildDeviceList;
+		var devlist;
+		if ( running.not ){ this.start }; // start eventloop if not yet running
+		devlist = this.prbuildDeviceList;
+		devlist.postln;
 		if ( devlist.isKindOf( Array ) ){
 			deviceNames = devlist;
 			devlist.do{ |it,i|
@@ -24,11 +29,13 @@ HID_SDL {
 
 	*start{
 		this.prStart;
+		running = true;
 		ShutDown.add( this.stop );
 	}
 
 	*stop{
 		this.prStop;
+		running = false;
 	}
 
   /// private
@@ -113,7 +120,7 @@ HID_SDL_Device {
 	var <>closeAction;
 	var <>debug = false;
 
-	*new{
+	*new{ |id,name|
 		^super.new.init( id, name );
 	}
 
@@ -127,7 +134,7 @@ HID_SDL_Device {
 	valueAction{ arg ...args;
 		if ( debug ){
 			([ id, name ] ++ args).postln;
-		}
+		};
 		action.value( *args );
 //		elementDictionary.at( args[0], args[1] ).valueAction( args.copyToEnd( 2 ) ); // type, id
 	}
@@ -170,6 +177,6 @@ HID_SDL_Element{
 
 	valueAction{ arg ...args;
 		action.value( *args );
-		value = *args;
+		value = args;
 	}
 }
