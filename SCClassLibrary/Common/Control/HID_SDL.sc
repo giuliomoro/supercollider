@@ -7,12 +7,18 @@ HID_SDL {
 
 	classvar <>globalAction; // this is where HIDFunc should hook into
 
+	classvar <>debug = false;
+
+	classvar <joyAxisSpec;
+
 	*initClass{
+		//Spec.initClass; ControlSpec.initClass;
 		deviceList = IdentityDictionary.new;
 	}
 
 	*buildDeviceList{
 		var devlist;
+		joyAxisSpec = Spec.add( \sdlJoyAxis, [ -32768, 32767, \linear, 1].asSpec );
 		if ( running.not ){ this.start }; // start eventloop if not yet running
 		devlist = this.prbuildDeviceList;
 		devlist.postln;
@@ -80,31 +86,42 @@ HID_SDL {
 	*prJoystickClosed{ |devid|
 		globalAction.value( \closed, devid );
 		deviceList.at( devid ).closeAction.value;
-		[ devid, "closed" ].postln; // debugging
+		if ( debug ){
+			[ devid, "closed" ].postln; // debugging
+		}
 	}
 
 	*prJoystickAxis { | devid, axis, value |
+		value = joyAxisSpec.unmap( value );
 		globalAction.value( \axis, devid, axis, value );
 		deviceList.at( devid ).valueAction( \axis, axis, value );
-		[ devid, "axis", axis, value ].postln; // debugging
+		if ( debug ){
+			[ devid, "axis", axis, value ].postln; // debugging
+		}
 	}
 
 	*prJoystickButton { | devid, button, value |
 		globalAction.value( \button, devid, button, value );
 		deviceList.at( devid ).valueAction( \button, button, value );
-		[ devid, "button", button, value ].postln; // debugging
+		if ( debug ){
+			[ devid, "button", button, value ].postln; // debugging
+		}
 	}
 
 	*prJoystickHat { | devid, hat, value |
 		globalAction.value( \hat, devid, hat, value );
 		deviceList.at( devid ).valueAction( \hat, hat, value );
-		[ devid, "hat", hat, value ].postln; // debugging
+		if ( debug ){
+			[ devid, "hat", hat, value ].postln; // debugging
+		}
 	}
 
 	*prJoystickBall { | devid, ball, xvalue, yvalue |
 		globalAction.value( \ball, devid, ball, xvalue, yvalue );
 		deviceList.at( devid ).valueAction( \ball, ball, xvalue, yvalue );
-		[ devid, "ball", ball, xvalue, yvalue ].postln; // debugging
+		if ( debug ) {
+			[ devid, "ball", ball, xvalue, yvalue ].postln; // debugging
+		}
 	}
 }
 
@@ -154,9 +171,9 @@ HID_SDL_Device {
 	}
 
 	prettyPrint{
-		"Device % has % the following properties:\n".(id, name).postln;
+		"Device [%] : [%] has the following properties:\n".postf(id, name);
 		[ ["number of axes",numAxes], ["number of buttons", numButtons ], [ "number of hats", numHats ], [ "number of balls", numBalls ], [ "unique identifier", guid ] ].do{ |it|
-			"\t % : % ".( it[0], it[1] ).postln;
+			"\t % : % \n".postf( it[0], it[1] );
 		};
 	}
 
