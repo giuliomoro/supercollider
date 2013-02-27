@@ -50,8 +50,8 @@ extern bool compiledOK;
 
 #include <boost/thread.hpp>
 #include <map>
-// #include <SDL2/SDL.h>
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
+// #include <SDL/SDL.h>
 
 typedef std::map<int,SDL_Joystick*> joy_map_t;
 
@@ -88,7 +88,7 @@ public:
 	int initialize_SDL();
 
 protected:	
-	void threadLoop(void*);
+	void threadLoop();
 	void handleEvent(SDL_Event * evt, boost::atomic<bool> const & shouldBeRunning);
 	void joystickClosed(int, boost::atomic<bool> const & shouldBeRunning);
 // 	void joystickInfo();
@@ -136,19 +136,18 @@ int SC_HID_SDLManager::open_joystick( int joy_idx ){
 
 int SC_HID_SDLManager::close_joystick( int joy_idx ){
   if ( joysticks.count( joy_idx ) >= 0 ){
-  /* this is SDL2.0 stuff
+  // this is SDL2.0 stuff
     if ( !SDL_JoystickGetAttached( joysticks.find( joy_idx )->second ) ){
         // FIXME: use sc-standard for printing errors
       fprintf(stderr, "HID SDL : joystick was already closed %d\n", joy_idx);
       return 0;
     } else {
-    */
     // FIXME: add closed action call?
 //    joystickClosed( joy_idx, mShouldBeRunning );
       SDL_JoystickClose( joysticks.find( joy_idx )->second );
       joysticks.erase( joysticks.find( joy_idx ) );
       return 1;
-    //}
+    }
   } else {
       fprintf(stderr, "HID SDL : joystick was not open %d\n", joy_idx);
       return 0;
@@ -159,15 +158,14 @@ SDL_Joystick * SC_HID_SDLManager::get_joystick( int joy_idx ){
   SDL_Joystick * myjoy;
   if ( joysticks.count( joy_idx ) >= 0 ){
     myjoy = joysticks.find( joy_idx )->second;
-    /* this is SDL2 stuff
+    // this is SDL2 stuff
     if ( !SDL_JoystickGetAttached( myjoy ) ){
         // FIXME: use sc-standard for printing errors
       fprintf(stderr, "HID SDL : joystick was closed %d\n", joy_idx);
       return NULL;
     } else {
-    */
       return myjoy;
-    //}
+    }
   } else {
       fprintf(stderr, "HID SDL : joystick was not open %d\n", joy_idx);
       return NULL;
@@ -375,7 +373,7 @@ void SC_HID_SDLManager::handleEvent( SDL_Event * evt, boost::atomic<bool> const 
 }
 
 // this updates the joystick states each step of the loop
-void SC_HID_SDLManager::threadLoop(void*){
+void SC_HID_SDLManager::threadLoop(){
   SDL_Event event;
   while(m_running ){
     while( SDL_PollEvent(&event) ){
@@ -391,14 +389,13 @@ void SC_HID_SDLManager::threadLoop(void*){
 	  fprintf(stderr, "HID SDL Error: Unhandled event type: %d\n", event.type);
 	  break;
       }
-    /*  SDL2 stuff
+    //  SDL2 stuff
       // check that joysticks are still attached:
       joy_map_iterator itr;
       for(itr = joysticks.begin(); itr != joysticks.end(); ++itr)
 	if ( !SDL_JoystickGetAttached( itr->second ) ){
 	  joystickClosed( itr->first, mShouldBeRunning );
 	}
-	*/
       SDL_Delay(1); // 1ms delay, is that useful??
     }
   }
@@ -432,11 +429,11 @@ int prHID_SDL_BuildDeviceList(VMGlobals* g, int numArgsPushed){
   if ( result > 0 ){
 	// populate array with found devices and their names:
 	PyrObject* allDevsArray = newPyrArray(g->gc, result * sizeof(PyrObject), 0 , true);
-//	for ( int joy_idx=0; joy_idx < result; joy_idx++ ){
-//	  PyrString *devname = newPyrString(g->gc, SDL_JoystickNameForIndex( joy_idx ), 0, true);
-//	  SetObject(allDevsArray->slots+allDevsArray->size++, devname);
-//	  g->gc->GCWrite(allDevsArray, (PyrObject*) devname);
-//	}
+	for ( int joy_idx=0; joy_idx < result; joy_idx++ ){
+	  PyrString *devname = newPyrString(g->gc, SDL_JoystickNameForIndex( joy_idx ), 0, true);
+	  SetObject(allDevsArray->slots+allDevsArray->size++, devname);
+	  g->gc->GCWrite(allDevsArray, (PyrObject*) devname);
+	}
 	SetObject( self, allDevsArray );
   } else {
 	// send back info that no devices were found, or empty array
@@ -501,8 +498,10 @@ int prHID_SDL_GetInfo( VMGlobals* g, int numArgsPushed ){
     // populate array with found devices and their names:
     PyrObject* devInfo = newPyrArray(g->gc, 6 * sizeof(PyrObject), 0 , true);
 
-//    PyrString *devname = newPyrString(g->gc, SDL_JoystickNameForIndex( joyid ), 0, true);
-    PyrString *devname = newPyrString(g->gc, SDL_JoystickName( joyid ), 0, true);
+    // SDL2
+    PyrString *devname = newPyrString(g->gc, SDL_JoystickNameForIndex( joyid ), 0, true);
+    // SDL1.3
+//     PyrString *devname = newPyrString(g->gc, SDL_JoystickName( joyid ), 0, true);
     SetObject(devInfo->slots+devInfo->size++, devname);
     g->gc->GCWrite(devInfo, (PyrObject*) devname);
 
@@ -597,8 +596,8 @@ void initHIDSDLPrimitives()
 
   definePrimitive(base, index++, "_HID_SDL_BuildDeviceList", prHID_SDL_BuildDeviceList, 1, 0); // this gets name info about the various devices that are attached
 
-  definePrimitive(base, index++, "_HID_SDL_Open", prHID_SDL_Open, 2, 0); // opens a specific device
-  definePrimitive(base, index++, "_HID_SDL_Close", prHID_SDL_Close, 2, 0); // closes a specific device
+  definePrimitive(base, index++, "_HID_SDL_OpenJoystick", prHID_SDL_Open, 2, 0); // opens a specific device
+  definePrimitive(base, index++, "_HID_SDL_CloseJoystick", prHID_SDL_Close, 2, 0); // closes a specific device
   
   definePrimitive(base, index++, "_HID_SDL_GetInfo", prHID_SDL_GetInfo, 2, 0); // gets info about a specific device
   definePrimitive(base, index++, "_HID_SDL_GetDeviceMap", prHID_SDL_GetDeviceMap, 2, 0); // this gets info about the specific device
@@ -612,10 +611,12 @@ void initHIDSDLPrimitives()
 //   SC_HID_SDLManager::s_joystickInfo = getsym("prJoystickInfo");   
 }
 
+#ifdef LINUX
 void initHIDPrimitives()
 {
 	//other platforms?
 }
+#endif
 
 #else // no SDL HID
 
