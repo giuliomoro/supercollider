@@ -358,7 +358,7 @@ void SC_HID_SDLManager::handleEvent( SDL_Event * evt, boost::atomic<bool> const 
 	++g->sp; SetInt(g->sp, evt->jhat.which);
 	++g->sp; SetInt(g->sp, evt->jhat.hat);
 	++g->sp; SetInt(g->sp, evt->jhat.value);
-	runInterpreter(g, s_joystickButton, 4);
+	runInterpreter(g, s_joystickHat, 4);
 	g->canCallOS = false;    
       }
       break;
@@ -382,8 +382,9 @@ void SC_HID_SDLManager::handleEvent( SDL_Event * evt, boost::atomic<bool> const 
 // this updates the joystick states each step of the loop
 void SC_HID_SDLManager::threadLoop(){
   SDL_Event event;
-  while(m_running ){
-    while( SDL_PollEvent(&event) ){
+//   while(m_running ){
+//     while( SDL_PollEvent(&event) ){
+  while(m_running && SDL_WaitEvent(&event) ){
       switch(event.type){
 	case SDL_JOYAXISMOTION:
 	case SDL_JOYBUTTONDOWN:
@@ -397,14 +398,16 @@ void SC_HID_SDLManager::threadLoop(){
 	  break;
       }
     //  SDL2 stuff
+    /*
       // check that joysticks are still attached:
       joy_map_iterator itr;
       for(itr = joysticks.begin(); itr != joysticks.end(); ++itr)
 	if ( !SDL_JoystickGetAttached( itr->second ) ){
 	  joystickClosed( itr->first, mShouldBeRunning );
 	}
+    */
 //       SDL_Delay(1); // 1ms delay, is that useful??
-    }
+//     	}
   }
 }
 
