@@ -30,7 +30,7 @@ HID_SDL {
 	*start{
 		this.prStart;
 		running = true;
-		ShutDown.add( this.stop );
+		ShutDown.add( {this.stop} );
 	}
 
 	*stop{
@@ -86,25 +86,25 @@ HID_SDL {
 	*prJoystickAxis { | devid, axis, value |
 		globalAction.value( \axis, devid, axis, value );
 		deviceList.at( devid ).valueAction( \axis, axis, value );
-		[ devid, axis, value ].postln; // debugging
+		[ devid, "axis", axis, value ].postln; // debugging
 	}
 
 	*prJoystickButton { | devid, button, value |
 		globalAction.value( \button, devid, button, value );
 		deviceList.at( devid ).valueAction( \button, button, value );
-		[ devid, button, value ].postln; // debugging
+		[ devid, "button", button, value ].postln; // debugging
 	}
 
 	*prJoystickHat { | devid, hat, value |
 		globalAction.value( \hat, devid, hat, value );
 		deviceList.at( devid ).valueAction( \hat, hat, value );
-		[ devid, hat, value ].postln; // debugging
+		[ devid, "hat", hat, value ].postln; // debugging
 	}
 
 	*prJoystickBall { | devid, ball, xvalue, yvalue |
 		globalAction.value( \ball, devid, ball, xvalue, yvalue );
 		deviceList.at( devid ).valueAction( \ball, ball, xvalue, yvalue );
-		[ devid, ball, xvalue, yvalue ].postln; // debugging
+		[ devid, "ball", ball, xvalue, yvalue ].postln; // debugging
 	}
 }
 
@@ -147,9 +147,17 @@ HID_SDL_Device {
 		var result = HID_SDL.prGetJoystickInfo( id );
 		if ( result.isKindOf( Array ) ){
 			#name, numAxes, numButtons, numHats, numBalls, guid = result;
+			this.prettyPrint;
 		}{
 			"could not get info on joystick; maybe it is not open?".postln;
 		}
+	}
+
+	prettyPrint{
+		"Device % has % the following properties:\n".(id, name).postln;
+		[ ["number of axes",numAxes], ["number of buttons", numButtons ], [ "number of hats", numHats ], [ "number of balls", numBalls ], [ "unique identifier", guid ] ].do{ |it|
+			"\t % : % ".( it[0], it[1] ).postln;
+		};
 	}
 
 	open{
