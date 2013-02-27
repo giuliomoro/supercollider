@@ -116,10 +116,7 @@ add_definitions(-DYYSTACK_USE_ALLOCA)
 
 
 # sdl
-# pkg_check_modules(sdl2 REQUIRED sdl2)
-# find_package( sdl )
-Find_Package(SDL REQUIRED)
-# pkg_check_modules(sdl2 REQUIRED sdl2)
+Find_Package(SDL2 REQUIRED)
 
 ## FIXME: add an if, in case sdl library not found
 list(APPEND sclang_sources
@@ -127,13 +124,7 @@ list(APPEND sclang_sources
    )
 add_definitions(-DHAVE_SDL_HID)
 ## FIXME: add linking?
-#include_directories(
-#  ${sdl2_INCLUDE_DIRS}
-#)
 
-#link_directories(
-#  ${sdl2_LIBRARY_DIRS}
-#)
 
 if(UNIX)
 	if(APPLE)
@@ -323,6 +314,10 @@ if (Boost_FOUND)
 else()
 	target_link_libraries(sclang libsclang boost_thread)
 endif()
+
+## FIXME: if SDL_FOUND
+target_link_libraries(sclang libsclang ${SDL2_LIBRARY})
+
 
 set_property(TARGET sclang
 	APPEND
