@@ -71,8 +71,11 @@ public:
 	int open_joystick( int joy_idx );
 	int close_joystick( int joy_idx );
 	SDL_Joystick * get_joystick( int joy_idx );
+	
 
 	void close_all_joysticks();
+
+	void setPyrObject( PyrObject * obj );
 
 	static PyrSymbol* s_joystickAxis;
 	static PyrSymbol* s_joystickButton;
@@ -111,6 +114,10 @@ PyrSymbol* SC_HID_SDLManager::s_joystickHat = 0;
 PyrSymbol* SC_HID_SDLManager::s_joystickBall = 0;
 PyrSymbol* SC_HID_SDLManager::s_joystickClosed = 0;
 // PyrSymbol* SC_HID_SDLManager::s_joystickInfo = 0;
+
+void SC_HID_SDLManager::setPyrObject( PyrObject * obj ){
+    m_obj = obj;
+}
 
 void SC_HID_SDLManager::close_all_joysticks(){
   joy_map_t::const_iterator it;
@@ -396,7 +403,7 @@ void SC_HID_SDLManager::threadLoop(){
 	if ( !SDL_JoystickGetAttached( itr->second ) ){
 	  joystickClosed( itr->first, mShouldBeRunning );
 	}
-      SDL_Delay(1); // 1ms delay, is that useful??
+//       SDL_Delay(1); // 1ms delay, is that useful??
     }
   }
 }
@@ -407,6 +414,11 @@ void SC_HID_SDLManager::threadLoop(){
 
 int prHID_SDL_Start(VMGlobals* g, int numArgsPushed)
 {
+  PyrSlot *args = g->sp - numArgsPushed + 1;
+  PyrSlot *self = args + 0;
+  
+//   SC_HID_SDLManager * sdlman = 
+  SC_HID_SDLManager::instance().setPyrObject( slotRawObject(self) );
     // initialize HID_SDLManager, and start event loop
   return SC_HID_SDLManager::instance().start();
 }
@@ -516,7 +528,9 @@ int prHID_SDL_GetInfo( VMGlobals* g, int numArgsPushed ){
     SetInt(devInfo->slots+devInfo->size++, numballs);
     
     char guid[64]; //TODO: is this large enough for all possible GUIDs?
-//    SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joy), guid, sizeof (guid));
+    // SDL2.0
+    SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joy), guid, sizeof (guid));
+    
     PyrString *devguid = newPyrString(g->gc, guid, 0, true);
     SetObject(devInfo->slots+devInfo->size++, devguid);
     g->gc->GCWrite(devInfo, (PyrObject*) devguid);
