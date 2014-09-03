@@ -6,17 +6,17 @@ GraphBuilder {
 			var result, rate, env;
 			result = SynthDef.wrap(func, rates, prependArgs).asUGenInput;
 			rate = result.rate;
-			if(rate === \scalar,{
-				// Out, SendTrig etc. probably a 0.0
+			if(rate.isNil or: { rate === \scalar }) {
+				// Out, SendTrig, [ ] etc. probably a 0.0
 				result
-			},{
-				if(fadeTime.notNil, {
-						result = this.makeFadeEnv(fadeTime) * result;
-				});
+			} {
+				if(fadeTime.notNil) {
+					result = this.makeFadeEnv(fadeTime) * result;
+				};
 				outClass = outClass.asClass;
 				outClass.replaceZeroesWithSilence(result.asArray);
 				outClass.multiNewList([rate, i_out]++result)
-			})
+			}
 		})
 	}
 
@@ -37,51 +37,18 @@ GraphBuilder {
 
 EnvGate {
 
-		*new { arg i_level=1, gate, fadeTime, doneAction=2, curve='sin';
-			var synthGate = gate ?? { NamedControl.kr(\gate, 1.0) };
-			var synthFadeTime = fadeTime ?? { NamedControl.kr(\fadeTime, 0.02) };
-			var startVal = (synthFadeTime <= 0);
-			^EnvGen.kr(
-				Env.new([ startVal, 1.0, 0.0], #[1.0, 1.0], curve, 1),
-				synthGate, i_level, 0.0, synthFadeTime, doneAction
-			)
-		}
+	*new { arg i_level=1, gate, fadeTime, doneAction=2, curve='sin';
+		var synthGate = gate ?? { NamedControl.kr(\gate, 1.0) + Impulse.kr(0) };
+		var synthFadeTime = fadeTime ?? { NamedControl.kr(\fadeTime, 0.02) };
+		var startVal = (synthFadeTime <= 0);
+		^EnvGen.kr(
+			Env.new([ startVal, 1.0, 0.0], #[1.0, 1.0], curve, 1),
+			synthGate, i_level, 0.0, synthFadeTime, doneAction
+		)
+	}
 
 }
 
-
-/*EnvGate {
-		classvar currentControl, buildSynthDef;
-
-
-		*new { arg i_level=1, gate, fadeTime, doneAction=2, curve='sin';
-			var synthGate, synthFadeTime, startVal;
-				if(gate.isNil and: { fadeTime.isNil }) {
-					#synthGate, synthFadeTime = this.currentControl
-				} {
-					synthGate = gate ?? { Control.names('gate').kr(1.0) };					synthFadeTime = fadeTime ?? { Control.names('fadeTime').kr(0.02) };
-				};
-				startVal = (synthFadeTime <= 0);
-				^EnvGen.kr(
-					Env.new([ startVal,1,0], #[1,1],curve,1),
-					synthGate, i_level, 0.0, synthFadeTime, doneAction
-				)
-		}
-
-		// this allows several instances within a single synthdef
-		*currentControl {
-			if(this.hasCurrentControl.not) {
-				currentControl = Control.names(['gate', 'fadeTime']).kr([1, 0.02]);
-				buildSynthDef = UGen.buildSynthDef;
-			}
-			^currentControl
-		}
-		*hasCurrentControl {
-			^UGen.buildSynthDef === buildSynthDef and: { currentControl.notNil }
-		}
-
-}
-*/
 
 NamedControl {
 	classvar currentControls, buildSynthDef;
@@ -129,11 +96,11 @@ NamedControl {
 			values = (values ? res.values).asArray;
 			if(res.values != values) {
 				Error("NamedControl: cannot have more than one set of "
-						"default values in the same control.").throw;
+					"default values in the same control.").throw;
 			};
 			if(rate.notNil and: { res.rate != rate }) {
 				Error("NamedControl: cannot have  more than one set of "
-						"rates in the same control.").throw;
+					"rates in the same control.").throw;
 			};
 
 		};

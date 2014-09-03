@@ -393,6 +393,7 @@ SynthDesc {
 				};
 			};
 		});
+		if(names.size > 255) { Error("A synthDef cannot have more than 255 control names.").throw };
 			// reusing variable to know if I should continue or not
 		if(comma) {
 "\nYour synthdef has been saved in the library and loaded on the server, if running.
@@ -481,6 +482,7 @@ Use of this synth in Patterns will not detect argument names automatically becau
 	outputData {
 		var ugens = def.children;
 		var outs = ugens.select(_.writesToBus);
+
 		^outs.collect { |outUgen|
 			(rate: outUgen.rate, numChannels: outUgen.numAudioChannels)
 		}
