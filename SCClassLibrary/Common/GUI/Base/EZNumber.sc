@@ -82,7 +82,7 @@ EZNumber : EZGui{
 
 
 		numberView.action = {
-			this.valueAction_(numberView.value);
+			this.valueActionIfChanged_(numberView.value);
 		};
 
 		if (initAction) {

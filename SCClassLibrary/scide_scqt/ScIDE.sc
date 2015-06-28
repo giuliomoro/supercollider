@@ -474,7 +474,7 @@ Document {
 		if((doc = this.findByQUuid(quuid)).isNil, {
 			doc = super.new.initFromIDE(quuid, title, chars, isEdited, path, selStart, selSize);
 			allDocuments = allDocuments.add(doc);
-		}, {doc.initFromIDE(quuid, title, chars, isEdited, path)});
+		}, {doc.initFromIDE(quuid, title, chars, isEdited, path, selStart, selSize)});
 	}
 
 	*syncDocs {|docInfo| // [quuid, title, string, isEdited, path, selStart, selSize]
@@ -686,22 +686,26 @@ Document {
 
 	keyDown { | modifiers, unicode, keycode, key |
 		var character = unicode.asAscii;
-		this.class.globalKeyDownAction.value(this,character, modifiers, unicode, keycode);
-		keyDownAction.value(this,character, modifiers, unicode, keycode, key);
+		var cocoaModifiers = QKeyModifiers.toCocoa(modifiers);
+		this.class.globalKeyDownAction.value(this,character, cocoaModifiers, unicode, keycode);
+		keyDownAction.value(this,character, cocoaModifiers, unicode, keycode, key);
 	}
 
 	keyUp { | modifiers, unicode, keycode, key |
 		var character = unicode.asAscii;
-		this.class.globalKeyUpAction.value(this,character, modifiers, unicode, keycode);
-		keyUpAction.value(this,character, modifiers, unicode, keycode, key);
+		var cocoaModifiers = QKeyModifiers.toCocoa(modifiers);
+		this.class.globalKeyUpAction.value(this,character, cocoaModifiers, unicode, keycode);
+		keyUpAction.value(this,character, cocoaModifiers, unicode, keycode, key);
 	}
 
 	mouseDown { | x, y, modifiers, buttonNumber, clickCount |
-		mouseDownAction.value(this, x, y, modifiers, buttonNumber, clickCount)
+		var cocoaModifiers = QKeyModifiers.toCocoa(modifiers);
+		mouseDownAction.value(this, x, y, cocoaModifiers, buttonNumber, clickCount)
 	}
 
 	mouseUp { | x, y, modifiers, buttonNumber |
-		mouseUpAction.value(this, x, y, modifiers, buttonNumber)
+		var cocoaModifiers = QKeyModifiers.toCocoa(modifiers);
+		mouseUpAction.value(this, x, y, cocoaModifiers, buttonNumber)
 	}
 
 	keyDownAction_ {|action|
@@ -887,7 +891,7 @@ Document {
 		numLines = breaks.size + 1;
 		line = min(line, numLines);
 		if(line > 1, { start = breaks[line - 2] + 1});
-		end = breaks[line - 1] ?? { text.size -1 };
+		end = breaks[line - 1] ?? { text.size };
 		this.selectRange(start, end - start);
 	}
 

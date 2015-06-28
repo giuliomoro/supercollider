@@ -298,6 +298,12 @@ BusPlug : AbstractFunction {
 		if(this.isNeutral.not) { ^bus.scope(bufsize, zoom) } { "Can't scope unintitialized bus".warn }
 	}
 
+	plot { | duration = 0.01, bounds, minval, maxval, separately = false |
+		^if(this.isNeutral.not) {
+			this.wakeUp;
+			bus.plot(duration, bounds, minval, maxval, separately);
+		} { "Can't plot unintitialized bus".warn; nil }
+	}
 
 
 	// bundling messages
@@ -310,7 +316,7 @@ BusPlug : AbstractFunction {
 			^this
 		};
 		this.newMonitorToBundle(bundle, numChannels);
-		group = group ?? { if(parentGroup.isPlaying) { parentGroup } { this.homeServer.asGroup } };
+		group = group ?? { if(parentGroup.isPlaying) { parentGroup } };
 		if(numChannels.notNil) { out = (0..numChannels-1) + (out ? 0) };
 		monitor.playNBusToBundle(bundle, out, nil, nil, bus, vol, fadeTime, group, addAction, multi);
 	}
@@ -322,7 +328,7 @@ BusPlug : AbstractFunction {
 			^this
 		};
 		this.newMonitorToBundle(bundle, ins !? { ins.asArray.maxItem + 1 });
-		group = group ?? { if(parentGroup.isPlaying) { parentGroup } { this.homeServer.asGroup } };
+		group = group ?? { if(parentGroup.isPlaying) { parentGroup } };
 		monitor.playNBusToBundle(bundle, outs, amps, ins, bus, vol, fadeTime, group, addAction);
 	}
 

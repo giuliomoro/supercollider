@@ -76,7 +76,7 @@ EZKnob : EZGui {
 		if((controlSpec.minval + controlSpec.maxval)==0){knobView.centered=true};
 
 		knobView.action = {
-			this.valueAction_(controlSpec.map(knobView.value));
+			this.valueActionIfChanged_(controlSpec.map(knobView.value));
 		};
 
 		if (controlSpec.step != 0) {
@@ -91,7 +91,7 @@ EZKnob : EZGui {
 			controlSpec.map(slider.value)
 		};
 
-		numberView.action = { this.valueAction_(numberView.value) };
+		numberView.action = { this.valueActionIfChanged_(numberView.value) };
 
 		if (initAction) {
 			this.valueAction_(initVal);

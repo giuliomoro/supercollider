@@ -28,7 +28,7 @@
 #include "../style/style.hpp"
 #include "QtCollider.h"
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 # include "../hacks/hacks_mac.hpp"
 #endif
 
@@ -139,7 +139,7 @@ QC_LANG_PRIMITIVE( QFont_DefaultFamilyForStyle, 1, PyrSlot *r, PyrSlot *a, VMGlo
         family = "serif";
         break;
     case 2:
-        styleHint = QFont::TypeWriter;
+        styleHint = QFont::Monospace;
         family = "monospace";
         break;
     default:
@@ -147,10 +147,9 @@ QC_LANG_PRIMITIVE( QFont_DefaultFamilyForStyle, 1, PyrSlot *r, PyrSlot *a, VMGlo
     }
 
     QFont font(family);
-    font.setStyleHint(styleHint);
+	font.setStyleHint(styleHint, QFont::PreferMatch);
 
-    QFontInfo fontInfo(font);
-    QtCollider::set( r, fontInfo.family() );
+    QtCollider::set( r, font.defaultFamily() );
 
     return errNone;
 }
@@ -180,7 +179,7 @@ QC_LANG_PRIMITIVE( Qt_FocusWidget, 0,  PyrSlot *r, PyrSlot *a, VMGlobals *g )
 
   QWidget *w = QApplication::focusWidget();
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
   // On Mac we need to make additional checks, as Qt does not monitor
   // focus changes to native Cocoa windows in the same application.
   if( w && !QtCollider::Mac::isKeyWindow( w ) )
