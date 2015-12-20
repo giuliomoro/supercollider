@@ -26,7 +26,6 @@ elseif(AUDIOAPI STREQUAL portaudio AND ((NOT WIN32) OR MSYS)) # MSYS like Apple
       message(FATAL_ERROR "Portaudio selected as audio API, but development files not found")
     endif()
 elseif(AUDIOAPI STREQUAL bela)
-	message(FATAL_ERROR "Not yet implemented: find_package(Bela), find_package(Xenomai)")
 	find_package(Xenomai)
 	if(NOT XENOMAI_FOUND)
 		message(FATAL_ERROR "Bela selected as audio API, but Xenomai development files not found")
@@ -35,6 +34,12 @@ elseif(AUDIOAPI STREQUAL bela)
 	if(NOT BELA_FOUND)
 		message(FATAL_ERROR "Bela selected as audio API, but Bela development files not found")
 	endif()
+
+
+	# TODO still to check: STATIC_LIBS := ./libprussdrv.a
+	# TODO still to check: LIBS := -lrt -lnative -lxenomai
+
+
 endif()
 message(STATUS "Audio API: ${AUDIOAPI}")
 
