@@ -83,6 +83,13 @@ struct WorldOptions
 
 	const char *mRestrictedPath = nullptr;
 
+#ifdef BELA
+	uint32 mBelaAnalogChannels;
+// 	uint32 mBelaAnalogInputChannels;
+// 	uint32 mBelaAnalogOutputChannels;
+#endif
+};
+
 	int mSharedMemoryID = 0;
 };
 
