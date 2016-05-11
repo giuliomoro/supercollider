@@ -47,6 +47,9 @@ ServerOptions {
 
 
 	var <>maxLogins = 1;
+	
+	// extension for BELA
+	var <>numAnalogIOChannels;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";
@@ -158,6 +161,10 @@ ServerOptions {
 		});
 		if (maxLogins.notNil, {
 			o = o ++ " -l " ++ maxLogins;
+		});
+		// addition for BELA
+		if (numAnalogIOChannels.notNil, {
+			o = o ++ " -J " ++ numAnalogIOChannels;
 		});
 		^o
 	}
