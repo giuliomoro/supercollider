@@ -431,6 +431,7 @@ World* World_New(WorldOptions *inOptions)
 // 		scprintf("INFO: WORLD: number of analog channels %i.\n", world->mBelaAnalogChannels );
 		world->mBelaAnalogInputChannels = inOptions->mBelaAnalogInputChannels;
 		world->mBelaAnalogOutputChannels = inOptions->mBelaAnalogOutputChannels;
+		world->mBelaDigitalChannels = inOptions->mBelaDigitalChannels;
 #endif
 
 #ifdef __APPLE__

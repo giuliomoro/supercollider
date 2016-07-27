@@ -49,7 +49,9 @@ ServerOptions {
 	var <>maxLogins = 1;
 	
 	// extension for BELA
-	var <>numAnalogIOChannels;
+	var <>numAnalogInChannels;
+	var <>numAnalogOutChannels;
+	var <>numDigitialChannels;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";
@@ -163,8 +165,14 @@ ServerOptions {
 			o = o ++ " -l " ++ maxLogins;
 		});
 		// addition for BELA
-		if (numAnalogIOChannels.notNil, {
-			o = o ++ " -J " ++ numAnalogIOChannels;
+		if (numAnalogInChannels.notNil, {
+			o = o ++ " -J " ++ numAnalogInChannels;
+		});
+		if (numAnalogOutChannels.notNil, {
+			o = o ++ " -K " ++ numAnalogOutChannels;
+		});
+		if (numDigitalChannels.notNil, {
+			o = o ++ " -G " ++ numDigitalChannels;
 		});
 		^o
 	}

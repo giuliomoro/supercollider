@@ -115,6 +115,7 @@ struct World
 // 	uint32 mBelaAnalogChannels;
 	uint32 mBelaAnalogInputChannels;
 	uint32 mBelaAnalogOutputChannels;
+	uint32 mBelaDigitalChannels;
 #endif
 };
 
