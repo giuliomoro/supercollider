@@ -85,9 +85,9 @@ void Usage()
 		"   -O <output-streams-enabled>\n"
 #endif
 #ifdef BELA
-		"   -J <bela-analog-channels>\n"
-// 		"   -J <bela-analog-input-channels>\n"
-// 		"   -K <bela-analog-output-channels>\n"
+// 		"   -J <bela-analog-channels>\n"
+		"   -J <bela-analog-input-channels>\n"
+		"   -K <bela-analog-output-channels>\n"
 #endif
 #if (_POSIX_MEMLOCK - 0) >=  200112L
 		"   -L enable memory locking\n"
@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
 
 	for (int i=1; i<argc;) {
 #ifdef BELA
-		if (argv[i][0] != '-' || argv[i][1] == 0 || strchr("utaioczblndpmwZrCNSDIOMHvVRUhPLJ", argv[i][1]) == 0) {
+		if (argv[i][0] != '-' || argv[i][1] == 0 || strchr("utaioczblndpmwZrCNSDIOMHvVRUhPLJK", argv[i][1]) == 0) {
 #else
 		if (argv[i][0] != '-' || argv[i][1] == 0 || strchr("utBaioczblndpmwZrCNSDIOMHvVRUhPL", argv[i][1]) == 0) {
 #endif
@@ -303,13 +303,13 @@ int main(int argc, char* argv[])
 #ifdef BELA
 			case 'J' :
 				checkNumArgs(2);
-				options.mBelaAnalogChannels = atoi(argv[j+1]);
+				options.mBelaAnalogInputChannels = atoi(argv[j+1]);
 // 				scprintf("INFO: number of analog channels %i.\n", options.mBelaAnalogChannels );
 				break;
-// 			case 'K' :
-// 				checkNumArgs(2);
-// 				options.mBelaAnalogOutputChannels = atoi(argv[j+1]);
-// 				break;
+			case 'K' :
+				checkNumArgs(2);
+				options.mBelaAnalogOutputChannels = atoi(argv[j+1]);
+				break;
 #endif
 			case 'V' :
 				checkNumArgs(2);

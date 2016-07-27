@@ -22,7 +22,7 @@
 #pragma once
 
 #ifdef BELA
-#include "BeagleRT.h"
+#include "Bela.h"
 #endif
 
 #include "SC_Types.h"
@@ -111,10 +111,10 @@ struct World
 #endif
 
 #ifdef BELA
-	BeagleRTContext *mBelaContext;
-	uint32 mBelaAnalogChannels;
-// 	uint32 mBelaAnalogInputChannels;
-// 	uint32 mBelaAnalogOutputChannels;
+	BelaContext *mBelaContext;
+// 	uint32 mBelaAnalogChannels;
+	uint32 mBelaAnalogInputChannels;
+	uint32 mBelaAnalogOutputChannels;
 #endif
 };
 
