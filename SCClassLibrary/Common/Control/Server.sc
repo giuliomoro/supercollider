@@ -51,7 +51,7 @@ ServerOptions {
 	// extension for BELA
 	var <>numAnalogInChannels;
 	var <>numAnalogOutChannels;
-	var <>numDigitialChannels;
+	var <>numDigitalChannels;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";
