@@ -88,7 +88,9 @@ void Usage()
 // 		"   -J <bela-analog-channels>\n"
 		"   -J <bela-analog-input-channels>\n"
 		"   -K <bela-analog-output-channels>\n"
-		"   -G <bela-digital-channels>\n"		
+		"   -G <bela-digital-channels>\n"
+		"   -X <bela-pga-gain-left>\n"
+		"   -Y <bela-pga-gain-right>\n"
 #endif
 #if (_POSIX_MEMLOCK - 0) >=  200112L
 		"   -L enable memory locking\n"
@@ -345,6 +347,14 @@ int main(int argc, char* argv[])
 				break;
 			case 'C' :
 				checkNumArgs(2);
+				break;
+			case 'X' :
+				checkNumArgs(2);
+				//options.mBelaAnalogInputChannels = atoi(argv[j+1]); //placeholder
+				break;
+			case 'Y' :
+				checkNumArgs(2);
+				//options.mBelaAnalogInputChannels = atoi(argv[j+1]); //placeholder
 				break;
 			case 'h':
 			default: Usage();
