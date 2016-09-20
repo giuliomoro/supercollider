@@ -83,15 +83,16 @@ struct WorldOptions
 
 	const char *mRestrictedPath = nullptr;
 
+	int mSharedMemoryID = 0;
+
 #ifdef BELA
 // 	uint32 mBelaAnalogChannels;
-	uint32 mBelaAnalogInputChannels;
-	uint32 mBelaAnalogOutputChannels;
-	uint32 mBelaDigitalChannels;
+	uint32 mBelaAnalogInputChannels = 0;
+	uint32 mBelaAnalogOutputChannels = 0;
+	uint32 mBelaDigitalChannels = 0;
+	float mBelaPGAGainLeft = 20;
+	float mBelaPGAGainRight = 20;
 #endif
-};
-
-	int mSharedMemoryID = 0;
 };
 
 struct SndBuf;
