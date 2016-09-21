@@ -90,6 +90,7 @@ struct WorldOptions
 	uint32 mBelaAnalogInputChannels = 0;
 	uint32 mBelaAnalogOutputChannels = 0;
 	uint32 mBelaDigitalChannels = 0;
+	float mBelaHeadphoneLevel = -6;
 	float mBelaPGAGainLeft = 20;
 	float mBelaPGAGainRight = 20;
 #endif
