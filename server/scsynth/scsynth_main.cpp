@@ -170,6 +170,7 @@ int main(int argc, char* argv[])
 	options.mBelaAnalogInputChannels = 0;
 	options.mBelaAnalogOutputChannels = 0;
 	options.mBelaDigitalChannels = 0;
+    options.mBelaHeadphoneLevel = -6.;
     options.mBelaPGAGainLeft = 20;
     options.mBelaPGAGainRight = 20;
 #endif
