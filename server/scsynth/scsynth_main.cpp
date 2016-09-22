@@ -90,7 +90,7 @@ void Usage()
 		"   -K <bela-analog-output-channels>\n"
 		"   -G <bela-digital-channels>\n"
 		"   -Q <bela-headphone-level> (0dB max, -63.5dB min)\n"
-        "   -X <bela-pga-gain-left>\n"
+		"   -X <bela-pga-gain-left>\n"
 		"   -Y <bela-pga-gain-right>\n"
 #endif
 #if (_POSIX_MEMLOCK - 0) >=  200112L
@@ -170,9 +170,9 @@ int main(int argc, char* argv[])
 	options.mBelaAnalogInputChannels = 0;
 	options.mBelaAnalogOutputChannels = 0;
 	options.mBelaDigitalChannels = 0;
-    options.mBelaHeadphoneLevel = -6.;
-    options.mBelaPGAGainLeft = 20;
-    options.mBelaPGAGainRight = 20;
+	options.mBelaHeadphoneLevel = -6.;
+	options.mBelaPGAGainLeft = 20;
+	options.mBelaPGAGainRight = 20;
 #endif
 
 	for (int i=1; i<argc;) {
@@ -328,6 +328,18 @@ int main(int argc, char* argv[])
 				checkNumArgs(2);
 				options.mBelaDigitalChannels = atoi(argv[j+1]);
 				break;
+			case 'Q' :
+				checkNumArgs(2);
+				options.mBelaHeadphoneLevel = atof(argv[j+1]);
+				break;
+			case 'X' :
+				checkNumArgs(2);
+				options.mBelaPGAGainLeft = atof(argv[j+1]);
+				break;
+			case 'Y' :
+				checkNumArgs(2);
+				options.mBelaPGAGainRight = atof(argv[j+1]);
+				break;
 #endif
 			case 'V' :
 				checkNumArgs(2);
@@ -351,18 +363,6 @@ int main(int argc, char* argv[])
 				break;
 			case 'C' :
 				checkNumArgs(2);
-				break;
-            case 'Q' :
-                checkNumArgs(2);
-                options.mBelaHeadphoneLevel = atof(argv[j+1]);
-                break;
-			case 'X' :
-				checkNumArgs(2);
-				options.mBelaPGAGainLeft = atof(argv[j+1]);
-				break;
-			case 'Y' :
-				checkNumArgs(2);
-				options.mBelaPGAGainRight = atof(argv[j+1]);
 				break;
 			case 'h':
 			default: Usage();
