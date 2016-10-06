@@ -55,6 +55,10 @@ ServerOptions {
 	var <>headphoneLevel;
 	var <>pgaGainLeft;
 	var <>pgaGainRight;
+	var <>speakerMuted;
+	var <>dacLevel;
+	var <>adcLevel;
+	var <>numMultiplexChannels;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";
@@ -186,6 +190,18 @@ ServerOptions {
 		});
 		if (pgaGainRight.notNil, {
 			o = o ++ " -Y " ++ pgaGainRight;
+		});
+		if (speakerMuted.notNil, {
+			o = o ++ " -s " ++ speakerMuted;
+		});
+		if (mBelaDACLevel.notNil, {
+			o = o ++ " -x " ++ mBelaDACLevel;
+		});
+		if (mBelaADCLevel.notNil, {
+			o = o ++ " -y " ++ mBelaADCLevel;
+		});
+		if (mBelaNumMuxChannels.notNil, {
+			o = o ++ " -g " ++ mBelaNumMuxChannels;
 		});
 		^o
 	}
