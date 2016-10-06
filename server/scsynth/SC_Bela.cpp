@@ -118,6 +118,7 @@ SC_BelaDriver::~SC_BelaDriver()
 {
 	// Clean up any resources allocated for audio
 	Bela_cleanupAudio();
+       	scprintf("SC_BelaDriver: >>Bela_cleanupAudio\n");
 	--countInstances;
 }
 
@@ -438,7 +439,7 @@ bool SC_BelaDriver::DriverStart()
 
 bool SC_BelaDriver::DriverStop()
 {
-	scprintf("SC_BelaDriver: >>DriverStop\n");
 	Bela_stopAudio();
+	scprintf("SC_BelaDriver: >>DriverStop\n");
 	return true;
 }

@@ -783,6 +783,7 @@ void World_WaitForQuit(struct World *inWorld, bool unload_plugins)
 	} catch (std::exception& exc) {
 		scprintf("Exception in World_WaitForQuit: %s\n", exc.what());
 	} catch (...) {
+                scprintf("Exception ... in World_WaitForQuit: %s\n" );
 	}
 }
 
