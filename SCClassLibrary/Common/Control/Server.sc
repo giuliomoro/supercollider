@@ -59,6 +59,7 @@ ServerOptions {
 	var <>dacLevel;
 	var <>adcLevel;
 	var <>numMultiplexChannels;
+	var <>belaPRU;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";
@@ -202,6 +203,9 @@ ServerOptions {
 		});
 		if (numMultiplexChannels.notNil, {
 			o = o ++ " -g " ++ numMultiplexChannels;
+		});
+		if (belaPRU.notNil, {
+			o = o ++ " -T " ++ belaPRU;
 		});
 		^o
 	}
