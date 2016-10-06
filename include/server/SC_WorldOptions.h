@@ -97,6 +97,7 @@ struct WorldOptions
 	float mBelaDACLevel = 0;
 	float mBelaADCLevel = 0;
 	uint32 mBelaNumMuxChannels = 0;
+	uint32 mBelaPRU = 0;
 #endif
 };
 
