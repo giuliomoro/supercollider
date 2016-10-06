@@ -1181,17 +1181,21 @@ AudioQuitCmd::AudioQuitCmd(World *inWorld, ReplyAddress *inReplyAddress)
 
 void AudioQuitCmd::CallDestructor()
 {
+        scprintf("Audio Quit Cmd call destructor.\n");
 	this->~AudioQuitCmd();
 }
 
 bool AudioQuitCmd::Stage2()
 {
+    scprintf("Audio Quit Cmd stage 2.\n");
 	mWorld->hw->mTerminating = true;
 	return true;
 }
 
 bool AudioQuitCmd::Stage3()
 {
+       scprintf("Audio Quit Cmd stage 3.\n");
+
 #if SC_AUDIO_API == SC_AUDIO_API_AUDIOUNITS
 	SendFailure(&mReplyAddress, "/quit", "not allowed in AU host\n");
 	scprintf("/quit : quit not allowed in AU host\n");
@@ -1205,6 +1209,8 @@ bool AudioQuitCmd::Stage3()
 
 void AudioQuitCmd::Stage4()
 {
+        scprintf("Audio Quit Cmd stage 4.\n");
+
 	SendDone("/quit");
 	mWorld->hw->mQuitProgram->post();
 }
