@@ -33,6 +33,8 @@
 #else
 # include <sys/wait.h>
 #endif
+#include <wordexp.h>
+#include <getopt.h>
 
 #ifdef _WIN32
 
@@ -84,17 +86,7 @@ void Usage()
 #endif
 #ifdef BELA
 // 		"   -J <bela-analog-channels>\n"
-		"   -J <bela-analog-input-channels>\n"
-		"   -K <bela-analog-output-channels>\n"
-		"   -G <bela-digital-channels>\n"
-		"   -Q <bela-headphone-level> (0dB max, -63.5dB min)\n"
-		"   -X <bela-pga-gain-left>\n"
-		"   -Y <bela-pga-gain-right>\n"
-                "   -s <bela-speaker-mute>\n"
-                "   -x <bela-dac-level>\n"
-                "   -y <bela-adc-level>\n"
-                "   -g <bela-multiplexer-channels>\n"
-                "   -T <bela-pru-id>\n"
+		"   -J \"any bela option(s)\"           (use -J --help to list them)\n"
 #endif
 #if (_POSIX_MEMLOCK - 0) >=  200112L
 		"   -L enable memory locking\n"
@@ -138,12 +130,13 @@ void Usage()
 	} \
 	i += n;
 
+#include "Bela.h"
+BelaInitSettings gBelaSettings;
 
 int main(int argc, char* argv[]);
 int main(int argc, char* argv[])
 {
 	setlinebuf(stdout);
-
 #ifdef _WIN32
 	// initialize winsock
 	WSAData wsaData;
@@ -161,6 +154,8 @@ int main(int argc, char* argv[])
 	WorldOptions options = kDefaultWorldOptions;
 
 #ifdef BELA
+	Bela_defaultSettings(&gBelaSettings);
+	// TODO: set your defaults here, straight into gBelaSettings instead of below
 	// defaults
 	options.mBelaAnalogInputChannels = 0;
 	options.mBelaAnalogOutputChannels = 0;
@@ -168,11 +163,11 @@ int main(int argc, char* argv[])
 	options.mBelaHeadphoneLevel = -6.;
 	options.mBelaPGAGainLeft = 20;
 	options.mBelaPGAGainRight = 20;
-        options.mBelaSpeakerMuted = 0;
-        options.mBelaADCLevel = 0;
-        options.mBelaDACLevel = 0;
-        options.mBelaNumMuxChannels = 0;
-        options.mBelaPRU = 0;
+	options.mBelaSpeakerMuted = 0;
+	options.mBelaADCLevel = 0;
+	options.mBelaDACLevel = 0;
+	options.mBelaNumMuxChannels = 0;
+	options.mBelaPRU = 0;
 #endif
 
 	for (int i=1; i<argc;) {
@@ -316,9 +311,41 @@ int main(int argc, char* argv[])
 				break;
 #ifdef BELA
 			case 'J' :
-				checkNumArgs(2);
-				options.mBelaAnalogInputChannels = atoi(argv[j+1]);
+			{
+				// parsing Bela options
+				wordexp_t we;
+				// parse the argument string into a new "argv/argc"-like pair 
+				i += 2; // increment SC arguments counter 
+				we.we_offs = 1; // this adds an offset of empty strings at the beginning of the returned tokens
+				if(wordexp(argv[j + 1], &we, WRDE_NOCMD | WRDE_DOOFFS)){
+					scprintf("Error in the Bela command line options you passed\n");
+					break;
+				}
+				struct option customOptions[] =
+				{
+					{"help", 0, NULL, 'h'},
+					{NULL, 0, NULL, 0}
+				};
+				while(1){
+					int c;
+					if ((c = Bela_getopt_long(we.we_wordc + we.we_offs, we.we_wordv, "h", customOptions, &gBelaSettings)) < 0)
+						break;
+					switch (c) {
+					case 'h':
+						Bela_usage();
+						exit(0);
+					case '?':
+					default:
+						Bela_usage();
+						exit(1);
+					break;
+					}
+				}
+				wordfree(&we);
+				scprintf("main initialization of the Bela settings from command line\n");
+				scprintf("Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", gBelaSettings.pruNumber, gBelaSettings.numAnalogInChannels, gBelaSettings.numAnalogOutChannels, gBelaSettings.numDigitalChannels, gBelaSettings.numMuxChannels, gBelaSettings.headphoneLevel, gBelaSettings.pgaGain[0],gBelaSettings.pgaGain[1], gBelaSettings.dacLevel, gBelaSettings.adcLevel );
 				break;
+			}
 			case 'K' :
 				checkNumArgs(2);
 				options.mBelaAnalogOutputChannels = atoi(argv[j+1]);
@@ -339,11 +366,11 @@ int main(int argc, char* argv[])
 				checkNumArgs(2);
 				options.mBelaPGAGainRight = atof(argv[j+1]);
 				break;
-                        case 's' :
+			case 's' :
 				checkNumArgs(2);
 				options.mBelaSpeakerMuted = atoi(argv[j+1]) > 0;
 				break;
-                        case 'x' :
+			case 'x' :
 				checkNumArgs(2);
 				options.mBelaDACLevel = atof(argv[j+1]);
 				break;

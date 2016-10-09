@@ -311,89 +311,81 @@ void SC_BelaDriver::staticMAudioSyncSignal(){
 	// ... but mode switches are still happening here, in a lower priority thread.
 	// FIXME: this triggers a mode switch in Xenomai.
 	staticMAudioSync->Signal();
-	rt_task_suspend(rt_task_self());
+	//rt_task_suspend(rt_task_self());
 }
 // ====================================================================
-
+extern BelaInitSettings gBelaSettings;
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
 	scprintf("SC_BelaDriver: >>DriverSetup\n");
-	BelaInitSettings settings;
-	Bela_defaultSettings(&settings);	// This function should be called in main() before parsing any command-line arguments. It
-				// sets default values in the data structure which specifies the BeagleRT settings, including
-				// frame sizes, numbers of channels, volume levels and other parameters.
-
-	if(mPreferredHardwareBufferFrameSize){
-		settings.periodSize = mPreferredHardwareBufferFrameSize;
-	}
-	if(settings.periodSize < mSCBufLength) {
+	if(gBelaSettings.periodSize < mSCBufLength) {
 		scprintf("Error in SC_BelaDriver::DriverSetup(): hardware buffer size (%i) smaller than SC audio buffer size (%i). It is recommended to have them set to the same value, using both the '-Z' and '-z' command-line options respectively.\n",
-				settings.periodSize, mSCBufLength);
+				gBelaSettings.periodSize, mSCBufLength);
 		return false;
 	}
-	// note that Bela doesn't give us an option to choose samplerate, since it's baked-in.
+
+	//Set your Bela overrides here, if you want to override or check the command line options.
 	
 	// configure the number of analog channels - this will determine their samplerate
-	settings.useAnalog = 0;
+	#if 0
+	gBelaSettings.useAnalog = 0;
 	
 	if ( mWorld->mBelaAnalogInputChannels > 0 ){
-	  settings.useAnalog = 1;
+	  gBelaSettings.useAnalog = 1;
 	  if ( mWorld->mBelaAnalogInputChannels < 5 ){ // always use a minimum of 4 analog channels, as we cannot read analog I/O faster than audio rate	    
-	    settings.numAnalogInChannels = 4; // analog rate == audio rate
+	    gBelaSettings.numAnalogInChannels = 4; // analog rate == audio rate
 	  } else {
-	    settings.numAnalogInChannels = 8; // analog rate == audie rate / 2
+	    gBelaSettings.numAnalogInChannels = 8; // analog rate == audie rate / 2
 	  }
 	} else {
-	  settings.numAnalogInChannels = 0;
+	  gBelaSettings.numAnalogInChannels = 0;
 	}
 	
 	if ( mWorld->mBelaAnalogOutputChannels > 0 ){
 	  if ( mWorld->mBelaAnalogOutputChannels < 5 ){ // always use a minimum of 4 analog channels, as we cannot read analog I/O faster than audio rate	    
-	    settings.numAnalogOutChannels = 4; // analog rate == audio rate
+	    gBelaSettings.numAnalogOutChannels = 4; // analog rate == audio rate
 	  } else {
-	    settings.numAnalogOutChannels = 8; // analog rate == audie rate / 2
+	    gBelaSettings.numAnalogOutChannels = 8; // analog rate == audie rate / 2
 	  }
 	} else {
-	  settings.numAnalogOutChannels = 0;
+	  gBelaSettings.numAnalogOutChannels = 0;
 	}
 	
 	// configure the number of digital channels
-	settings.useDigital = 0;
+	gBelaSettings.useDigital = 0;
 	
 	if ( mWorld->mBelaDigitalChannels > 0 ){
-	  settings.numDigitalChannels = mWorld->mBelaDigitalChannels;
-	  settings.useDigital = 1;
+	  gBelaSettings.numDigitalChannels = mWorld->mBelaDigitalChannels;
+	  gBelaSettings.useDigital = 1;
 	}
 	if ( (mWorld->mBelaHeadphoneLevel >= -63.5) && ( mWorld->mBelaHeadphoneLevel <= 0. )) {             //headphone output level (0dB max; -63.5dB min)
-	  settings.headphoneLevel = mWorld->mBelaHeadphoneLevel;
+	  gBelaSettings.headphoneLevel = mWorld->mBelaHeadphoneLevel;
 	}
 	if ( (mWorld->mBelaPGAGainLeft >= 0)  && ( mWorld->mBelaPGAGainLeft <= 59.5) ){ // (0db min; 59.5db max)
-	  settings.pgaGain[0] = mWorld->mBelaPGAGainLeft;
+	  gBelaSettings.pgaGain[0] = mWorld->mBelaPGAGainLeft;
 	}
 	if ( (mWorld->mBelaPGAGainRight >= 0) && ( mWorld->mBelaPGAGainRight <= 59.5)){// (0db min; 59.5db max)
-	  settings.pgaGain[1] = mWorld->mBelaPGAGainRight;
+	  gBelaSettings.pgaGain[1] = mWorld->mBelaPGAGainRight;
 	}
 	
 	if ( mWorld->mBelaSpeakerMuted ){
-            settings.beginMuted = 1;
+            gBelaSettings.beginMuted = 1;
         } else {
-            settings.beginMuted = 0;
+            gBelaSettings.beginMuted = 0;
         }
         if ( (mWorld->mBelaDACLevel >= -63.5) && ( mWorld->mBelaDACLevel <= 0. )) {             // (0dB max; -63.5dB min)
-            settings.dacLevel = mWorld->mBelaDACLevel;
+            gBelaSettings.dacLevel = mWorld->mBelaDACLevel;
         }
         if ( (mWorld->mBelaADCLevel >= -12) && ( mWorld->mBelaADCLevel <= 0. )) {             // (0dB max; -12dB min)
-            settings.adcLevel = mWorld->mBelaADCLevel;
+            gBelaSettings.adcLevel = mWorld->mBelaADCLevel;
         }
         
-        settings.numMuxChannels = mWorld->mBelaNumMuxChannels;
-        
-        if ( (mWorld->mBelaPRU == 0) || (mWorld->mBelaPRU == 1) ){
-            settings.pruNumber = mWorld->mBelaPRU;
-        }
-
-	scprintf("SC_BelaDriver: >>DriverSetup - Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", settings.pruNumber, settings.numAnalogInChannels, settings.numAnalogOutChannels, settings.numDigitalChannels, settings.numMuxChannels, settings.headphoneLevel, settings.pgaGain[0],settings.pgaGain[1], settings.dacLevel, settings.adcLevel );
-        if ( settings.beginMuted == 1 ){
+        gBelaSettings.numMuxChannels = mWorld->mBelaNumMuxChannels;
+ #endif   
+		gBelaSettings.pruNumber = 1;
+	scprintf("Actual initialization of the Bela settings after overrides \n");
+	scprintf("SC_BelaDriver: >>DriverSetup - Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", gBelaSettings.pruNumber, gBelaSettings.numAnalogInChannels, gBelaSettings.numAnalogOutChannels, gBelaSettings.numDigitalChannels, gBelaSettings.numMuxChannels, gBelaSettings.headphoneLevel, gBelaSettings.pgaGain[0],gBelaSettings.pgaGain[1], gBelaSettings.dacLevel, gBelaSettings.adcLevel );
+        if ( gBelaSettings.beginMuted == 1 ){
             scprintf( "Speakers are muted.\n" );
         } else {
             scprintf( "Speakers are not muted.\n" );
@@ -402,12 +394,12 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	// Initialise the PRU audio device. This function prepares audio rendering in BeagleRT. It should be called from main() sometime
 	// after command line option parsing has finished. It will initialise the rendering system, which
 	// in the process will result in a call to the user-defined setup() function.
-	if(Bela_initAudio(&settings, this) != 0) {
+	if(Bela_initAudio(&gBelaSettings, this) != 0) {
 		scprintf("Error in SC_BelaDriver::DriverSetup(): unable to initialise audio\n");
 		return false;
 	}
 
-	*outNumSamples = settings.periodSize;
+	*outNumSamples = gBelaSettings.periodSize;
 	*outSampleRate = 44100.0;		// This is fixed in Bela at the moment
 
 	return true;
@@ -461,6 +453,7 @@ bool SC_BelaDriver::DriverStart()
 
 bool SC_BelaDriver::DriverStop()
 {
+	scprintf("Driver stop\n");
 	Bela_stopAudio();
 	scprintf("SC_BelaDriver: >>DriverStop\n");
 	return true;
