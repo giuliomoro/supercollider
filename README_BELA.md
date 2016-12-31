@@ -145,6 +145,7 @@ I/O support for the BeLa is implemented.
 
 The startup flag ```-J``` defines how many analog input channels will be enabled, the startup flag ```-K``` how many analog output channels will be enabled, the startup flag ```-G``` how many digital channels will be enabled; by default all are set to 0.
 
+
 So for all analog and digital channels to be enabled run scsynth like this:
 
        scsynth -u 57110 -z 16 -J 8 -K 8 -G 16
@@ -213,6 +214,51 @@ So make one connection and start scsynth:
 And another to start sclang:
 
     sclang examples/bela/bela_example_analogin_2.scd
+    
+Options Overview
+----------------------------
+
+Here is a breakdown of the options for running *scsynth* and how to set them up with either *scsynth* or *sclang*
+
+<table>
+	<tr>
+		<th>param</th>
+		<th>scsynth</th>
+		<th>sclang</th>
+	</tr>
+
+	<tr>
+		<td>audio computation block size</td>
+		<td>-z #</td> 
+		<td> s.options.blockSize = 16;</td>
+	</tr>
+	<tr>
+		<td>number analog input channels enabled [0, 4, 8]</td>
+		<td>-J #</td>
+		<td>s.options.numAnalogInChannels = 0;</td>
+	</tr>
+	<tr>
+		<td>number analog output channels enabled [0, 4, 8]</td>
+		<td>-K #</td>
+		<td>s.options.numAnalogOutChannels = 0;</td>
+	</tr>
+	<tr>
+		<td>number digital channels enabled</td>
+		<td>-G #</td>
+		<td>s.options.numDigitalChannels = 16;</td>
+	</tr>
+	<tr>
+		<td>number of input buffer channels</td>
+		<td>-i #</td>
+		<td>s.options.numInputBusChannels = 2;</td>
+	</tr>
+	<tr>
+		<td>number of output buffer channels</td>
+		<td>-o #</td>
+		<td>s.options.numOutputBusChannels = 2;</td>
+	</tr>
+</table>
+
 
 Monitoring its performance
 ======================================================
