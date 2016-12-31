@@ -145,7 +145,6 @@ I/O support for the BeLa is implemented.
 
 The startup flag ```-J``` defines how many analog input channels will be enabled, the startup flag ```-K``` how many analog output channels will be enabled, the startup flag ```-G``` how many digital channels will be enabled; by default all are set to 0.
 
-
 So for all analog and digital channels to be enabled run scsynth like this:
 
        scsynth -u 57110 -z 16 -J 8 -K 8 -G 16
