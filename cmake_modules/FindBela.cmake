@@ -50,7 +50,7 @@ else (BELA_INCLUDE_DIRS)
       /root/Bela/core
   )
 
-  file(GLOB BELA_SOURCE_FILES ${BELA_SOURCES_DIR}/*.cpp)
+  file(GLOB BELA_SOURCE_FILES ${BELA_SOURCES_DIR}/*.c ${BELA_SOURCES_DIR}/*.cpp)
 
   if (BELA_INCLUDE_DIR)
     set(BELA_FOUND TRUE)
