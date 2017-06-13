@@ -80,26 +80,30 @@ Before we compile, here are two optional steps to make your workflow faster
     echo "cache_dir = '/extrabela/ccache'" >> ~/.ccache/ccache.conf
 
 2. alternatively, use `distcc` to make all your builds faster by off-loading the actual compilation to your host computer. You need to:
-* install a cross-compiler for gcc-4.8 on your host (e.g.: [this](http://www.welzels.de/blog/en/arm-cross-compiling-with-mac-os-x/) for Mac or a `g++-4.8-arm-linux-gnueabihf` package for your Linux distro)
-* install `distcc` on your host
-* on the host, launch `distccd` with something like `distccd --verbose --no-detach --daemon --allow 192.168.7.2 --log-level error --log-file ~/distccd.log`
+* install a cross-compiler for gcc-4.8 on your host (e.g.: [this](http://bela.io/downloads/gcc-linaro-arm-linux-gnueabihf-2014.04_mac.pkg) for Mac or a `g++-4.8-arm-linux-gnueabihf` package for your Linux distro)
+* install `distcc` on your host and make sure your cross-compiler is in the `PATH` (e.g.: on the host `export PATH=$PATH:/usr/local/linaro/arm-linux-gnueabihf/bin/`)
+* on the host, launch `distccd` with something like `distccd --verbose --no-detach --daemon --allow 192.168.7.2 --log-level error --log-file ~/distccd.log` (and then `tail ~/distccd.log` for errors)
 * then on the board run the following before the `cmake` commands below:
 
 	export DISTCC_HOSTS="192.168.7.1"
-	export CC="/usr/bin/distcc arm-linux-gnueabihf-gcc"
-	export CXX="/usr/bin/distcc arm-linux-gnueabihf-g++"
+	export CC="/usr/bin/distcc arm-linux-gnueabihf-gcc-4.8"
+	export CXX="/usr/bin/distcc arm-linux-gnueabihf-g++-4.8"
 
 NOTE: make sure you don't pass `-march=native` to the compiler when using `distcc`, or it will compile natively. So make sure you do not pass `-DNATIVE=ON` to `cmake`
 
 Then here's how to build:
 
+    # note that we explicitly choose the compiler version 4.8 here too, whichever command we use
+
     mkdir /extrabela/build
     cd /extrabela/build
-    # note that we explicitly choose the compiler version 4.8 here too, whichever command we use
+
     # here's the command WITHOUT ccache
     cmake /extrabela/supercollider -DCMAKE_C_COMPILER=gcc-4.8 -DCMAKE_CXX_COMPILER=g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
+
     # or here's the command WITH ccache
     cmake /extrabela/supercollider -DCMAKE_C_COMPILER=/usr/lib/ccache/gcc-4.8 -DCMAKE_CXX_COMPILER=/usr/lib/ccache/g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
+
 	# or here's the command WITH distcc (it will infer the compilers from the `export CC CXX` above
     cmake /extrabela/supercollider -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
     make
