@@ -5,12 +5,12 @@ Compiling SuperCollider scsynth on Bela
 
 See [README.md](README.md) for the main SuperCollider readme.
 
-This file is Dan's and Marije's notes about compiling SC on [Bela](http://bela.io) platform.
+This file is Dan's, Marije's and Giulio's notes about compiling SC on [Bela](http://bela.io) platform.
 
 This branch `bela_hackery_v01` contains that plus other modifications to get the SC source code master branch building.
 The main addition in this branch is a **Xenomai/Bela audio driver for scsynth**, to use Bela's ultra-low-latency audio thread *instead* of jack/portaudio, and **plugins to access the analog and digital channels of the Bela-cape**
 
-> *NOTE:* This guide assumes you have the [Bela image v0.1.0](https://github.com/BelaPlatform/bela-image/releases/tag/v0.1.0) (or higher).
+> *NOTE:* This guide assumes you have the [Bela image v0.2.0b](https://github.com/BelaPlatform/bela-image/releases/tag/v0.2.0b) (or higher).
 
 All of the commands here are to be executed *on the Bela device itself*. Normally you would SSH to it from a computer connected by USB, in order to do the following stuff.
 
@@ -21,7 +21,7 @@ Plug in an ethernet cable (or connect to the Internet some other way, see also [
 
 a) See below at compiling and installing
 
-b) Set the system time:
+b) Set the system time (probably not needed if the board gets the date from the DHCP server automatically):
 
     dpkg-reconfigure tzdata
     ntpdate pool.ntp.org
@@ -72,11 +72,24 @@ Get dependent libraries:
     apt-get install libudev-dev
 
 
-Before we compile, here's an optional step: installing ccache makes repeated builds faster, if you have spare disk space for it. It's especially helpful if you're going to be changing the cmake build scripts.
+Before we compile, here are two optional steps to make your workflow faster
 
-    apt-get install ccache
+1. installing `ccache` makes repeated builds faster, if you have spare disk space for it. It's especially helpful if you're going to be changing the cmake build scripts.
+
     mkdir /root/.ccache
     echo "cache_dir = '/extrabela/ccache'" >> ~/.ccache/ccache.conf
+
+2. alternatively, use `distcc` to make all your builds faster by off-loading the actual compilation to your host computer. You need to:
+* install a cross-compiler for gcc-4.8 on your host (e.g.: [this](http://www.welzels.de/blog/en/arm-cross-compiling-with-mac-os-x/) for Mac or a `g++-4.8-arm-linux-gnueabihf` package for your Linux distro)
+* install `distcc` on your host
+* on the host, launch `distccd` with something like `distccd --verbose --no-detach --daemon --allow 192.168.7.2 --log-level error --log-file ~/distccd.log`
+* then on the board run the following before the `cmake` commands below:
+
+	export DISTCC_HOSTS="192.168.7.1"
+	export CC="/usr/bin/distcc arm-linux-gnueabihf-gcc"
+	export CXX="/usr/bin/distcc arm-linux-gnueabihf-g++"
+
+NOTE: make sure you don't pass `-march=native` to the compiler when using `distcc`, or it will compile natively. So make sure you do not pass `-DNATIVE=ON` to `cmake`
 
 Then here's how to build:
 
@@ -87,24 +100,13 @@ Then here's how to build:
     cmake /extrabela/supercollider -DCMAKE_C_COMPILER=gcc-4.8 -DCMAKE_CXX_COMPILER=g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
     # or here's the command WITH ccache
     cmake /extrabela/supercollider -DCMAKE_C_COMPILER=/usr/lib/ccache/gcc-4.8 -DCMAKE_CXX_COMPILER=/usr/lib/ccache/g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
+	# or here's the command WITH distcc (it will infer the compilers from the `export CC CXX` above
+    cmake /extrabela/supercollider -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
     make
 
-The `make` step will take a little while, about 30 minutes for me. It seems it is stuck for a long time at compiling the BinaryOpUGens, but it will get past that.
+The `make` step will take a little while, about 30 minutes when using plain `gcc` or `ccache` (you can try `make -j2` or `make -j3` with `distcc`), more like 10 minutes when using `distcc`. It seems it is stuck for a long time at compiling the BinaryOpUGens, but it will get past that.
 
-Next we install.
-
-**CLASH WARNING:** Note that my version of Bela already comes with a standard compile of SuperCollider in `/usr/local/bin/scsynth`, `/usr/local/bin/sclang`, `/usr/local/bin/sclang_pipeapp`, `/usr/local/bin/scvim`, plus plugins at `/usr/local/lib/SuperCollider/plugins` and class library in `/usr/local/share/SuperCollider`. To avoid confusion, you might want to destroy those before installing, else you might accidentally end up using the vanilla version.
-
-With these commands you remove the old stuff:
-    
-    rm -r /usr/local/lib/SuperCollider/
-    rm -r /usr/local/share/SuperCollider/
-    rm /usr/local/bin/sclang
-    rm /usr/local/bin/sclangpipe_app 
-    rm /usr/local/bin/scsynth
-    rm /usr/local/bin/scvim
-
-Installation the new version:
+Next we install:
 
     make install
 
