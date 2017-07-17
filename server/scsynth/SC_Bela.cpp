@@ -269,7 +269,8 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 				float analogValue; // placeholder for analogvalue
 				for (int n = 0; n < bufFrames; ++n) {
 				  if(!(n % mAudioFramesPerAnalogFrame)) {
-				    analogValue = analogRead(belaContext, n / mAudioFramesPerAnalogFrame, analogPin);
+				    analogValue = analogRead(belaContext, n / mAudioFramesPerAnalogFrame, analogPin); // this is between 0 and 1
+                    analogValue = analogValue * 2. - 1.; // remap from 0 to 1 to -1 to 1
 				  }
 				  *dst++ = analogValue; // is this between 0 and 1 still?
 				}
