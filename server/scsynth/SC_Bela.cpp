@@ -83,7 +83,7 @@ public:
 	void setAudioFramesPerAnalogFrame( int afpaf );
 	
 	void BelaAudioCallback(BelaContext *belaContext);
-	static void staticMAudioSyncSignal();
+	static void staticMAudioSyncSignal(void*);
 	static AuxiliaryTask mAudioSyncSignalTask;
 	static int countInstances;
 	static SC_SyncCondition* staticMAudioSync;
@@ -337,7 +337,7 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 	Bela_scheduleAuxiliaryTask(mAudioSyncSignalTask);
 }
 
-void SC_BelaDriver::staticMAudioSyncSignal(){
+void SC_BelaDriver::staticMAudioSyncSignal(void*){
 	// ... but mode switches are still happening here, in a lower priority thread.
 	// FIXME: this triggers a mode switch in Xenomai.
 	staticMAudioSync->Signal();
@@ -347,6 +347,7 @@ void SC_BelaDriver::staticMAudioSyncSignal(){
 
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
+        SetPrintFunc((PrintFunc)rt_vprintf);
 	scprintf("SC_BelaDriver: >>DriverSetup\n");
 	BelaInitSettings settings;
 	Bela_defaultSettings(&settings);	// This function should be called in main() before parsing any command-line arguments. It
