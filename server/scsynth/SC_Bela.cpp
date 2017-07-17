@@ -68,7 +68,6 @@ class SC_BelaDriver : public SC_AudioDriver
 {
 
 	int mInputChannelCount, mOutputChannelCount;
-	int mAudioFramesPerAnalogFrame;
 	
 protected:
 	// Driver interface methods
@@ -80,8 +79,6 @@ public:
 	SC_BelaDriver(struct World *inWorld);
 	virtual ~SC_BelaDriver();
 
-	void setAudioFramesPerAnalogFrame( int afpaf );
-	
 	void BelaAudioCallback(BelaContext *belaContext);
 	static void staticMAudioSyncSignal(void*);
 	static AuxiliaryTask mAudioSyncSignalTask;
@@ -121,36 +118,6 @@ SC_BelaDriver::~SC_BelaDriver()
        	scprintf("SC_BelaDriver: >>Bela_cleanupAudio\n");
 	--countInstances;
 }
-
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
-bool sc_belaSetup(BelaContext* belaContext, void* userData)
-{
-	if(userData == 0){
-		scprintf("SC_BelaDriver: error, setup() got no user data\n");
-		return false;
-	}
-	
-	// cast void pointer
-	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
-	if ( (belaContext->analogInChannels > 0) || (belaContext->analogOutChannels > 0) ){
-	  belaDriver->setAudioFramesPerAnalogFrame( belaContext->audioFrames / belaContext->analogFrames );
-	}
-
-	return true;
-}
-
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
-// void cleanup(BelaContext *belaContext, void *userData)
-// {
-// }
 
 void sc_belaRender(BelaContext *belaContext, void *userData)
 {
@@ -255,25 +222,21 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 
 			// copy+touch inputs
 			tch = inTouched;
-			float *dst;
+            memcpy(
+                inBuses,
+                belaContext->audioIn,
+                sizeof(belaContext->audioIn[0]) * bufFrames * minInputs
+            );
 			for (int k = 0; k < minInputs; ++k) {
-				dst = inBuses + k * bufFrames;
-				for (int n = 0; n < bufFrames; ++n) {
-					*dst++ = belaContext->audioIn[n * numInputs + k];
-				}
 				*tch++ = bufCounter;
 			}
+
+            memcpy(
+                inBuses + minInputs * bufFrames,
+                belaContext->audioIn,
+                sizeof(belaContext->audioIn[0]) * bufFrames * anaInputs
+            );
 			for ( int k = minInputs; k < ( minInputs + anaInputs ); ++k ) {
-				dst = inBuses + k * bufFrames;
-				int analogPin = k - minInputs; // starting at 0
-				float analogValue; // placeholder for analogvalue
-				for (int n = 0; n < bufFrames; ++n) {
-				  if(!(n % mAudioFramesPerAnalogFrame)) {
-				    analogValue = analogRead(belaContext, n / mAudioFramesPerAnalogFrame, analogPin); // this is between 0 and 1
-                    analogValue = analogValue * 2. - 1.; // remap from 0 to 1 to -1 to 1
-				  }
-				  *dst++ = analogValue; // is this between 0 and 1 still?
-				}
 				*tch++ = bufCounter;
 			}
 
@@ -303,27 +266,22 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 
 			for (int k = 0; k < minOutputs; ++k) {
 				if (*tch++ == bufCounter) {
-					float *src = outBuses + k * bufFrames;
-					for (int n = 0; n < bufFrames; ++n) {
-						belaContext->audioOut[n * numOutputs + k] = *src++;
-					}
-				} else {
-					for (int n = 0; n < bufFrames; ++n) {
-						belaContext->audioOut[n * numOutputs + k] = 0.0f;
-					}
+                    memcpy(
+                        belaContext->audioOut,
+                        outBuses + k * bufFrames,
+                        sizeof(belaContext->audioOut[0]) * bufFrames
+                    );
 				}
 			}
+
 			for (int k = minOutputs; k < ( minOutputs + anaOutputs ); ++k) {
-				int analogPin = k - minOutputs; // starting at 0
-				if (*tch++ == bufCounter) {
-					float *src = outBuses + k * bufFrames;
-					for (int n = 0; n < bufFrames; ++n) {
-						if(!(n % mAudioFramesPerAnalogFrame)){
- 							analogWriteOnce( belaContext, n / mAudioFramesPerAnalogFrame, analogPin, *src * 0.5 + 0.5 );
-					  }
-					  ++src;
-					}
-				}
+				unsigned int analogChannel = k - minOutputs; // starting at 0
+                memcpy(
+                    belaContext->analogOut,
+                    outBuses + analogChannel * bufFrames,
+                    sizeof(belaContext->analogOut[0]) * bufFrames
+                );
+                // analogWriteOnceNI( belaContext, n / mAudioFramesPerAnalogFrame, analogPin, *src * 0.5 + 0.5 ); // used to be like this 
 			}
 			// advance OSC time
 			mOSCbuftime = oscTime = nextTime;
@@ -348,14 +306,13 @@ void SC_BelaDriver::staticMAudioSyncSignal(void*){
 
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
-        SetPrintFunc((PrintFunc)rt_vprintf);
-	scprintf("SC_BelaDriver: >>DriverSetup\n");
+    SetPrintFunc((PrintFunc)rt_vprintf);
 	BelaInitSettings settings;
-	Bela_defaultSettings(&settings);	// This function should be called in main() before parsing any command-line arguments. It
-				// sets default values in the data structure which specifies the BeagleRT settings, including
-				// frame sizes, numbers of channels, volume levels and other parameters.
-        settings.setup = sc_belaSetup;
-        settings.render = sc_belaRender;
+    Bela_defaultSettings(&settings);
+    settings.render = sc_belaRender;
+    settings.interleave = 0;
+    settings.uniformSampleRate = 1;
+    settings.analogOutputsPersist = 0;
 
 	if(mPreferredHardwareBufferFrameSize){
 		settings.periodSize = mPreferredHardwareBufferFrameSize;
@@ -446,12 +403,6 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 
 	return true;
 }
-
-
-void SC_BelaDriver::setAudioFramesPerAnalogFrame( int afpaf ){
-  mAudioFramesPerAnalogFrame = afpaf;
-}
-
 
 bool SC_BelaDriver::DriverStart()
 {

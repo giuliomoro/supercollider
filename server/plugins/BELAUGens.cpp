@@ -42,12 +42,12 @@ static InterfaceTable *ft;
 
 struct AnalogIn : public Unit
 {
-  int mAudioFramesPerAnalogFrame;
+// TODO: can we remove this ?
 };
 
 struct AnalogOut : public Unit
 {
-  int mAudioFramesPerAnalogFrame;
+// TODO: can we remove this ?
 };
 
 // static digital pin, static function (in)
@@ -110,9 +110,14 @@ void AnalogIn_next_aa(AnalogIn *unit, int inNumSamples)
 	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) ){
 	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
 	} else {
-	  if(!(n % unit->mAudioFramesPerAnalogFrame)) {
-	    analogValue = analogRead(context, n/unit->mAudioFramesPerAnalogFrame, analogPin);
-	  }
+        analogValue = analogReadNI(context, n, analogPin);
+        if(analogPin == 0)
+        {
+            static int count = 0;
+            count++;
+            if(count % 20000 == 0)
+                rt_printf("AnalogValue = %.3f\n", analogValue);
+        }
 	}
 	*++out = analogValue;
   }
@@ -135,8 +140,13 @@ void AnalogIn_next_ak(AnalogIn *unit, int inNumSamples)
         }
     } else {
         for(unsigned int n = 0; n < inNumSamples; n++) {
-            if(!(n % unit->mAudioFramesPerAnalogFrame)) {
-                analogValue = analogRead(context, n/unit->mAudioFramesPerAnalogFrame, analogPin);
+            analogValue = analogReadNI(context, n, analogPin);
+            if(analogPin == 0)
+            {
+                static int count = 0;
+                count++;
+                if(count % 20000 == 0)
+                    rt_printf("AnalogValue = %.3f\n", analogValue);
             }
             *++out = analogValue;
         }
@@ -156,7 +166,7 @@ void AnalogIn_next_kk(AnalogIn *unit, int inNumSamples)
     rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
     ZOUT0(0) = 0.0;  
   } else {
-    ZOUT0(0) = analogRead(context, 0, analogPin);
+    ZOUT0(0) = analogReadNI(context, 0, analogPin);
   }
 }
 
@@ -168,8 +178,6 @@ void AnalogIn_Ctor(AnalogIn *unit)
 		rt_printf("AnalogIn Error: the UGen needs BELA analog enabled, with 4 or 8 channels\n");
 		return;
 	}
-
-	unit->mAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 
 	// initiate first sample
 	AnalogIn_next_kk( unit, 1);  
@@ -210,10 +218,8 @@ void AnalogOut_next_aaa(AnalogOut *unit, int inNumSamples)
 	if ( (analogPin < 0) || (analogPin >= context->analogOutChannels) ){
 	    rt_printf( "AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogOutChannels, analogPin );
 	} else {
-	  newinput = in[n]; // read next input sample
-	  if(!(n % unit->mAudioFramesPerAnalogFrame)) {
-	    analogWriteOnce(context,  n/ unit->mAudioFramesPerAnalogFrame, analogPin, newinput);
-	  }
+        newinput = in[n]; // read next input sample
+        analogWriteOnceNI(context, n, analogPin, newinput);
 	}
   }
 }
@@ -233,9 +239,7 @@ void AnalogOut_next_aka(AnalogOut *unit, int inNumSamples)
   } else {
     for(unsigned int n = 0; n < inNumSamples; n++) {
         newinput = in[n]; // read next input sample
-	if(!(n % unit->mAudioFramesPerAnalogFrame)) {
-	    analogWriteOnce(context,  n/ unit->mAudioFramesPerAnalogFrame, analogPin, newinput);
-	}
+	    analogWriteOnceNI(context, n, analogPin, newinput);
     }
   }
 }
@@ -256,10 +260,7 @@ void AnalogOut_next_aak(AnalogOut *unit, int inNumSamples)
 	if ( (analogPin < 0) || (analogPin >= context->analogOutChannels) ){
 	    rt_printf( "AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogOutChannels, analogPin );
 	} else {
-// 	  newinput = in[n]; // read next input sample
-	  if(!(n % unit->mAudioFramesPerAnalogFrame)) {
-	    analogWriteOnce(context,  n/ unit->mAudioFramesPerAnalogFrame, analogPin, in);
-	  }
+        analogWriteOnceNI(context, n, analogPin, in);
 	}
   }
 }
@@ -277,7 +278,7 @@ void AnalogOut_next_kk(AnalogOut *unit, int inNumSamples)
   if ( (analogPin < 0) || (analogPin >= context->analogOutChannels) ){
     rt_printf( "AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogOutChannels, analogPin );
   } else {
-    analogWrite(context, 0, analogPin, in);
+        analogWriteNI(context, 0, analogPin, in);
   }
 }
 
@@ -289,8 +290,6 @@ void AnalogOut_Ctor(AnalogOut *unit)
 		rt_printf("AnalogOut Error: the UGen needs BELA analog enabled\n");
 		return;
 	}
-
-	unit->mAudioFramesPerAnalogFrame = context->audioFrames / context->analogFrames;
 
 	// initiate first sample
 	AnalogOut_next_kk( unit, 1);  
