@@ -83,11 +83,14 @@ Before we compile, here are two optional steps to make your workflow faster
 * install a cross-compiler for gcc-4.8 on your host (e.g.: [this](http://bela.io/downloads/gcc-linaro-arm-linux-gnueabihf-2014.04_mac.pkg) for Mac or a `g++-4.8-arm-linux-gnueabihf` package for your Linux distro)
 * install `distcc` on your host and make sure your cross-compiler is in the `PATH` (e.g.: on the host `export PATH=$PATH:/usr/local/linaro/arm-linux-gnueabihf/bin/`)
 * on the host, launch `distccd` with something like `distccd --verbose --no-detach --daemon --allow 192.168.7.2 --log-level error --log-file ~/distccd.log` (and then `tail ~/distccd.log` for errors)
+* on the board install `distcc` with `apt-get install -t jessie distcc`
 * then on the board run the following before the `cmake` commands below:
 
-	export DISTCC_HOSTS="192.168.7.1"
-	export CC="/usr/bin/distcc arm-linux-gnueabihf-gcc-4.8"
-	export CXX="/usr/bin/distcc arm-linux-gnueabihf-g++-4.8"
+```
+export DISTCC_HOSTS="192.168.7.1"
+export CC="/usr/bin/distcc arm-linux-gnueabihf-gcc-4.8"
+export CXX="/usr/bin/distcc arm-linux-gnueabihf-g++-4.8"
+```
 
 NOTE: make sure you don't pass `-march=native` to the compiler when using `distcc`, or it will compile natively. So make sure you do not pass `-DNATIVE=ON` to `cmake`
 
