@@ -83,7 +83,7 @@ public:
 	void setAudioFramesPerAnalogFrame( int afpaf );
 	
 	void BelaAudioCallback(BelaContext *belaContext);
-	static void staticMAudioSyncSignal(void*);
+	static void staticMAudioSyncSignal();
 	static AuxiliaryTask mAudioSyncSignalTask;
 	static int countInstances;
 	static SC_SyncCondition* staticMAudioSync;
@@ -122,7 +122,37 @@ SC_BelaDriver::~SC_BelaDriver()
 	--countInstances;
 }
 
-void render(BelaContext *belaContext, void *userData)
+// setup() is called once before the audio rendering starts.
+// Use it to perform any initialisation and allocation which is dependent
+// on the period size or sample rate.
+//
+// userData holds an opaque pointer to a data structure that was passed
+// in from the call to initAudio().
+//
+// Return true on success; returning false halts the program.
+bool sc_belaSetup(BelaContext* belaContext, void* userData)
+{
+	if(userData == 0){
+		scprintf("SC_BelaDriver: error, setup() got no user data\n");
+		return false;
+	}
+	
+	// cast void pointer
+	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
+	if ( (belaContext->analogInChannels > 0) || (belaContext->analogOutChannels > 0) ){
+	  belaDriver->setAudioFramesPerAnalogFrame( belaContext->audioFrames / belaContext->analogFrames );
+	}
+
+	return true;
+}
+
+// cleanup() is called once at the end, after the audio has stopped.
+// Release any resources that were allocated in setup().
+// void cleanup(BelaContext *belaContext, void *userData)
+// {
+// }
+
+void sc_belaRender(BelaContext *belaContext, void *userData)
 {
 	SC_BelaDriver *driver = (SC_BelaDriver*)userData;
 
@@ -241,7 +271,7 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 				  if(!(n % mAudioFramesPerAnalogFrame)) {
 				    analogValue = analogRead(belaContext, n / mAudioFramesPerAnalogFrame, analogPin);
 				  }
-				  *dst++ = analogValue;
+				  *dst++ = analogValue; // is this between 0 and 1 still?
 				}
 				*tch++ = bufCounter;
 			}
@@ -307,23 +337,23 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 	Bela_scheduleAuxiliaryTask(mAudioSyncSignalTask);
 }
 
-void SC_BelaDriver::staticMAudioSyncSignal(void*){
+void SC_BelaDriver::staticMAudioSyncSignal(){
 	// ... but mode switches are still happening here, in a lower priority thread.
 	// FIXME: this triggers a mode switch in Xenomai.
 	staticMAudioSync->Signal();
 	rt_task_suspend(rt_task_self());
 }
-
 // ====================================================================
 
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
-	SetPrintFunc((PrintFunc)rt_vprintf);
 	scprintf("SC_BelaDriver: >>DriverSetup\n");
 	BelaInitSettings settings;
 	Bela_defaultSettings(&settings);	// This function should be called in main() before parsing any command-line arguments. It
 				// sets default values in the data structure which specifies the BeagleRT settings, including
 				// frame sizes, numbers of channels, volume levels and other parameters.
+        settings.setup = sc_belaSetup;
+        settings.render = sc_belaRender;
 
 	if(mPreferredHardwareBufferFrameSize){
 		settings.periodSize = mPreferredHardwareBufferFrameSize;
@@ -420,36 +450,6 @@ void SC_BelaDriver::setAudioFramesPerAnalogFrame( int afpaf ){
   mAudioFramesPerAnalogFrame = afpaf;
 }
 
-
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
-// Return true on success; returning false halts the program.
-bool setup(BelaContext* belaContext, void* userData)
-{
-	if(userData == 0){
-		scprintf("SC_BelaDriver: error, setup() got no user data\n");
-		return false;
-	}
-	
-	// cast void pointer
-	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
-	if ( (belaContext->analogInChannels > 0) || (belaContext->analogOutChannels > 0) ){
-	  belaDriver->setAudioFramesPerAnalogFrame( belaContext->audioFrames / belaContext->analogFrames );
-	}
-
-	return true;
-}
-
-// cleanup() is called once at the end, after the audio has stopped.
-// Release any resources that were allocated in setup().
-void cleanup(BelaContext *belaContext, void *userData)
-{
-}
 
 bool SC_BelaDriver::DriverStart()
 {
