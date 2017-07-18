@@ -56,6 +56,8 @@ DigitalOut : UGen {
     *kr { arg digitalPin = 0, output=0, writeMode=0, mul=1.0, add=0.0;
         ^this.multiNew('control', digitalPin, output, writeMode ).madd(mul,add)
     }
+    numOutputs { ^0 }
+    writeOutputSpecs {}
 }
 
 /* input 1: id of digital pin to read; cannot be modulated
@@ -72,5 +74,4 @@ DigitalIO : UGen {
     *kr { arg digitalPin = 0, output=0, pinMode=0, mul=1.0, add=0.0;
         ^this.multiNew('control', digitalPin, output, pinMode ).madd(mul,add)
     }
-    
 }
