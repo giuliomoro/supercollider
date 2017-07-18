@@ -34,12 +34,6 @@
 # include <sys/wait.h>
 #endif
 
-#ifdef BELA
-#include <wordexp.h>
-#include <getopt.h>
-#include "Bela.h"
-#endif
-
 #ifdef _WIN32
 
 // according to this page: http://www.mkssoftware.com/docs/man3/setlinebuf.3.asp
@@ -91,7 +85,18 @@ void Usage()
 		"   -O <output-streams-enabled>\n"
 #endif
 #ifdef BELA
-        "   -J \"any bela option(s)\"           (use -J --help to list them)\n"
+// 		"   -J <bela-analog-channels>\n"
+		"   -J <bela-analog-input-channels>\n"
+		"   -K <bela-analog-output-channels>\n"
+		"   -G <bela-digital-channels>\n"
+		"   -Q <bela-headphone-level> (0dB max, -63.5dB min)\n"
+		"   -X <bela-pga-gain-left>\n"
+		"   -Y <bela-pga-gain-right>\n"
+                "   -s <bela-speaker-mute>\n"
+                "   -x <bela-dac-level>\n"
+                "   -y <bela-adc-level>\n"
+                "   -g <bela-multiplexer-channels>\n"
+                "   -T <bela-pru-id>\n"
 #endif
 #if (_POSIX_MEMLOCK - 0) >=  200112L
 		"   -L enable memory locking\n"
@@ -166,26 +171,23 @@ int main(int argc, char* argv[])
 	WorldOptions options;
 
 #ifdef BELA
-    
-    Bela_defaultSettings(&options.mBelaSettings);
-    
-// 	// defaults
-// 	options.mBelaAnalogInputChannels = 0;
-// 	options.mBelaAnalogOutputChannels = 0;
-// 	options.mBelaDigitalChannels = 0;
-// 	options.mBelaHeadphoneLevel = -6.;
-// 	options.mBelaPGAGainLeft = 20;
-// 	options.mBelaPGAGainRight = 20;
-//  options.mBelaSpeakerMuted = 0;
-//  options.mBelaADCLevel = 0;
-//  options.mBelaDACLevel = 0;
-//  options.mBelaNumMuxChannels = 0;
-//  options.mBelaPRU = 1;
+	// defaults
+	options.mBelaAnalogInputChannels = 0;
+	options.mBelaAnalogOutputChannels = 0;
+	options.mBelaDigitalChannels = 0;
+	options.mBelaHeadphoneLevel = -6.;
+	options.mBelaPGAGainLeft = 20;
+	options.mBelaPGAGainRight = 20;
+        options.mBelaSpeakerMuted = 0;
+        options.mBelaADCLevel = 0;
+        options.mBelaDACLevel = 0;
+        options.mBelaNumMuxChannels = 0;
+        options.mBelaPRU = 1;
 #endif
 
 	for (int i=1; i<argc;) {
 #ifdef BELA
-		if (argv[i][0] != '-' || argv[i][1] == 0 || strchr("utBaioczblndpmwZrCNSDIOMHvVRUhPLJ", argv[i][1]) == 0) {
+		if (argv[i][0] != '-' || argv[i][1] == 0 || strchr("utBaioczblndpmwZrCNSDIOMHvVRUhPLJKGXYQsxygT", argv[i][1]) == 0) {
 #else
 		if (argv[i][0] != '-' || argv[i][1] == 0 || strchr("utBaioczblndpmwZrCNSDIOMHvVRUhPL", argv[i][1]) == 0) {
 #endif
@@ -324,40 +326,49 @@ int main(int argc, char* argv[])
 				break;
 #ifdef BELA
 			case 'J' :
-			{
-				// parsing Bela options
-				wordexp_t we;
-				// parse the argument string into a new "argv/argc"-like pair 
-				i += 2; // increment SC arguments counter 
-				we.we_offs = 1; // this adds an offset of empty strings at the beginning of the returned tokens
-				if(wordexp(argv[j + 1], &we, WRDE_NOCMD | WRDE_DOOFFS)){
-					scprintf("Error in the Bela command line options you passed\n");
-					break;
-				}
-				struct option customOptions[] =
-				{
-					{"help", 0, NULL, 'h'},
-					{NULL, 0, NULL, 0}
-				};
-				while(1){
-					int c;
-					if ((c = Bela_getopt_long(we.we_wordc + we.we_offs, we.we_wordv, "h", customOptions, &options.mBelaSettings)) < 0)
-						break;
-					switch (c) {
-					case 'h':
-						Bela_usage();
-						exit(0);
-					case '?':
-					default:
-						Bela_usage();
-						exit(1);
-					break;
-					}
-				}
-				wordfree(&we);
-				scprintf("main initialization of the Bela settings from command line\n");
-                scprintf("Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", options.mBelaSettings.pruNumber, options.mBelaSettings.numAnalogInChannels, options.mBelaSettings.numAnalogOutChannels, options.mBelaSettings.numDigitalChannels, options.mBelaSettings.numMuxChannels, options.mBelaSettings.headphoneLevel, options.mBelaSettings.pgaGain[0],options.mBelaSettings.pgaGain[1], options.mBelaSettings.dacLevel, options.mBelaSettings.adcLevel )
-				break;                
+				checkNumArgs(2);
+				options.mBelaAnalogInputChannels = atoi(argv[j+1]);
+				break;
+			case 'K' :
+				checkNumArgs(2);
+				options.mBelaAnalogOutputChannels = atoi(argv[j+1]);
+				break;
+			case 'G' :
+				checkNumArgs(2);
+				options.mBelaDigitalChannels = atoi(argv[j+1]);
+				break;
+			case 'Q' :
+				checkNumArgs(2);
+				options.mBelaHeadphoneLevel = atof(argv[j+1]);
+				break;
+			case 'X' :
+				checkNumArgs(2);
+				options.mBelaPGAGainLeft = atof(argv[j+1]);
+				break;
+			case 'Y' :
+				checkNumArgs(2);
+				options.mBelaPGAGainRight = atof(argv[j+1]);
+				break;
+                        case 's' :
+				checkNumArgs(2);
+				options.mBelaSpeakerMuted = atoi(argv[j+1]) > 0;
+				break;
+                        case 'x' :
+				checkNumArgs(2);
+				options.mBelaDACLevel = atof(argv[j+1]);
+				break;
+                        case 'y' :
+				checkNumArgs(2);
+				options.mBelaADCLevel = atof(argv[j+1]);
+				break;
+                        case 'g' :
+				checkNumArgs(2);
+				options.mBelaNumMuxChannels = atoi(argv[j+1]);
+				break;
+                        case 'T' :
+				checkNumArgs(2);
+				options.mBelaPRU = atoi(argv[j+1]);
+				break;
 #endif
 			case 'V' :
 				checkNumArgs(2);

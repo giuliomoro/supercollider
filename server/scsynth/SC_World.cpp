@@ -452,7 +452,19 @@ World* World_New(WorldOptions *inOptions)
 			world->hw->mPassword[0] = 0;
 		}
 #ifdef BELA
-        world->mBelaInitSettings = &(inOptions->mBelaInitSettings); // just a pointer
+// 		world->mBelaAnalogChannels = inOptions->mBelaAnalogChannels;
+// 		scprintf("INFO: WORLD: number of analog channels %i.\n", world->mBelaAnalogChannels );
+		world->mBelaAnalogInputChannels = inOptions->mBelaAnalogInputChannels;
+		world->mBelaAnalogOutputChannels = inOptions->mBelaAnalogOutputChannels;
+		world->mBelaDigitalChannels = inOptions->mBelaDigitalChannels;
+		world->mBelaHeadphoneLevel = inOptions->mBelaHeadphoneLevel;
+		world->mBelaPGAGainLeft = inOptions->mBelaPGAGainLeft;
+		world->mBelaPGAGainRight = inOptions->mBelaPGAGainRight;                
+        world->mBelaSpeakerMuted = inOptions->mBelaSpeakerMuted;
+        world->mBelaDACLevel = inOptions->mBelaDACLevel;
+        world->mBelaADCLevel = inOptions->mBelaADCLevel;
+        world->mBelaNumMuxChannels = inOptions->mBelaNumMuxChannels;
+        world->mBelaPRU = inOptions->mBelaPRU;
 #endif
 
 #ifdef __APPLE__

@@ -112,7 +112,18 @@ struct World
 
 #ifdef BELA
 	BelaContext *mBelaContext;
-    BelaInitSettings *mBelaSettings;        
+// 	uint32 mBelaAnalogChannels;
+	uint32 mBelaAnalogInputChannels;
+	uint32 mBelaAnalogOutputChannels;
+	uint32 mBelaDigitalChannels;
+	float mBelaHeadphoneLevel;
+	float mBelaPGAGainLeft; 
+	float mBelaPGAGainRight;
+        bool mBelaSpeakerMuted;
+        float mBelaDACLevel;
+        float mBelaADCLevel;
+        uint32 mBelaNumMuxChannels;
+        uint32 mBelaPRU;        
 #endif
 };
 
