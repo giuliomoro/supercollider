@@ -47,19 +47,9 @@ ServerOptions {
 
 
 	var <>maxLogins = 1;
-	
+
 	// extension for BELA
-	var <>numAnalogInChannels;
-	var <>numAnalogOutChannels;
-	var <>numDigitalChannels;
-	var <>headphoneLevel;
-	var <>pgaGainLeft;
-	var <>pgaGainRight;
-	var <>speakerMuted;
-	var <>dacLevel;
-	var <>adcLevel;
-	var <>numMultiplexChannels;
-	var <>belaPRU;
+	var <>belaOptions;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";
@@ -172,41 +162,11 @@ ServerOptions {
 		if (maxLogins.notNil, {
 			o = o ++ " -l " ++ maxLogins;
 		});
-		
+
 		// additions for BELA
-		if (numAnalogInChannels.notNil, {
-			o = o ++ " -J " ++ numAnalogInChannels;
-		});
-		if (numAnalogOutChannels.notNil, {
-			o = o ++ " -K " ++ numAnalogOutChannels;
-		});
-		if (numDigitalChannels.notNil, {
-			o = o ++ " -G " ++ numDigitalChannels;
-		});
-		if (headphoneLevel.notNil, {
-			o = o ++ " -Q " ++ headphoneLevel;
-		});
-		if (pgaGainLeft.notNil, {
-			o = o ++ " -X " ++ pgaGainLeft;
-		});
-		if (pgaGainRight.notNil, {
-			o = o ++ " -Y " ++ pgaGainRight;
-		});
-		if (speakerMuted.notNil, {
-			o = o ++ " -s " ++ speakerMuted;
-		});
-		if (dacLevel.notNil, {
-			o = o ++ " -x " ++ dacLevel;
-		});
-		if (adcLevel.notNil, {
-			o = o ++ " -y " ++ adcLevel;
-		});
-		if (numMultiplexChannels.notNil, {
-			o = o ++ " -g " ++ numMultiplexChannels;
-		});
-		if (belaPRU.notNil, {
-			o = o ++ " -T " ++ belaPRU;
-		});
+		if ( belaOptions.notNil ){
+			o = o + "-J" + belaOptions.asOptionsString;
+		};
 		^o
 	}
 
