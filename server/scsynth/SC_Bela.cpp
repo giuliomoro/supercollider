@@ -254,8 +254,8 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 
             memcpy(
                 inBuses + minInputs * bufFrames,
-                belaContext->audioIn,
-                sizeof(belaContext->audioIn[0]) * bufFrames * anaInputs
+                belaContext->analogIn,
+                sizeof(belaContext->analogIn[0]) * bufFrames * anaInputs
             );
 			for ( int k = minInputs; k < ( minInputs + anaInputs ); ++k ) {
 				*tch++ = bufCounter;
