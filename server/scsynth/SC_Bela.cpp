@@ -307,6 +307,10 @@ void SC_BelaDriver::staticMAudioSyncSignal(void*){
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
     SetPrintFunc((PrintFunc)rt_vprintf);
+<<<<<<< HEAD
+=======
+	scprintf("SC_BelaDriver: >>DriverSetup\n");
+>>>>>>> BELA: scsynth: manage the analog input and output channels
 	BelaInitSettings settings;
     Bela_defaultSettings(&settings);
     settings.render = sc_belaRender;
@@ -319,7 +323,7 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	}
 	if(settings.periodSize < mSCBufLength) {
 		scprintf("Error in SC_BelaDriver::DriverSetup(): hardware buffer size (%i) smaller than SC audio buffer size (%i). It is recommended to have them set to the same value, using both the '-Z' and '-z' command-line options respectively.\n",
-				settings.periodSize, mSCBufLength);
+            settings.periodSize, mSCBufLength);
 		return false;
 	}
 	// note that Bela doesn't give us an option to choose samplerate, since it's baked-in.
@@ -334,19 +338,30 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	  } else {
 	    settings.numAnalogInChannels = 8; // analog rate == audie rate / 2
 	  }
-	} else {
-	  settings.numAnalogInChannels = 0;
+// 	} else {
+// 	  settings.numAnalogInChannels = 0;
 	}
 	
 	if ( mWorld->mBelaAnalogOutputChannels > 0 ){
 	  if ( mWorld->mBelaAnalogOutputChannels < 5 ){ // always use a minimum of 4 analog channels, as we cannot read analog I/O faster than audio rate	    
 	    settings.numAnalogOutChannels = 4; // analog rate == audio rate
 	  } else {
-	    settings.numAnalogOutChannels = 8; // analog rate == audie rate / 2
+	    settings.numAnalogOutChannels = 8; // analog rate == audio rate / 2
 	  }
 	} else {
 	  settings.numAnalogOutChannels = 0;
 	}
+	
+	// right now the number of analog output channels on bela needs to be the same as analog input channels
+	if ( settings.numAnalogOutChannels > settings.numAnalogInChannels ){
+        settings.numAnalogInChannels = settings.numAnalogOutChannels;
+    }
+	if ( settings.numAnalogInChannels > settings.numAnalogOutChannels ){
+        settings.numAnalogOutChannels = settings.numAnalogInChannels;
+    }
+    if ( settings.numAnalogInChannels > 0 ){
+        settings.useAnalog = 1;
+    }
 	
 	// configure the number of digital channels
 	settings.useDigital = 0;
