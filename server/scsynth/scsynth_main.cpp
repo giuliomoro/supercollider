@@ -324,7 +324,6 @@ int main(int argc, char* argv[])
 				break;
 #ifdef BELA
 			case 'J' :
-            {
 				// parsing Bela options
 				wordexp_t we;
 				// parse the argument string into a new "argv/argc"-like pair 
@@ -357,8 +356,7 @@ int main(int argc, char* argv[])
 				wordfree(&we);
 				scprintf("main initialization of the Bela settings from command line\n");
                 scprintf("Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", options.mBelaSettings.pruNumber, options.mBelaSettings.numAnalogInChannels, options.mBelaSettings.numAnalogOutChannels, options.mBelaSettings.numDigitalChannels, options.mBelaSettings.numMuxChannels, options.mBelaSettings.headphoneLevel, options.mBelaSettings.pgaGain[0],options.mBelaSettings.pgaGain[1], options.mBelaSettings.dacLevel, options.mBelaSettings.adcLevel )
-				break;
-            }
+				break;                
 #endif
 			case 'V' :
 				checkNumArgs(2);
