@@ -129,16 +129,16 @@ SC_BelaDriver::~SC_BelaDriver()
 // Return true on success; returning false halts the program.
 bool sc_belaSetup(BelaContext* belaContext, void* userData)
 {
-	if(userData == 0){
-		scprintf("SC_BelaDriver: error, setup() got no user data\n");
-		return false;
-	}
-	
-	// cast void pointer
-	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
-	if ( (belaContext->analogInChannels > 0) || (belaContext->analogOutChannels > 0) ){
-	  belaDriver->setAudioFramesPerAnalogFrame( belaContext->audioFrames / belaContext->analogFrames );
-	}
+// 	if(userData == 0){
+// 		scprintf("SC_BelaDriver: error, setup() got no user data\n");
+// 		return false;
+// 	}
+// 	
+// 	// cast void pointer
+// 	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
+// 	if ( (belaContext->analogInChannels > 0) || (belaContext->analogOutChannels > 0) ){
+// 	  belaDriver->setAudioFramesPerAnalogFrame( belaContext->audioFrames / belaContext->analogFrames );
+// 	}
 
 	return true;
 }
