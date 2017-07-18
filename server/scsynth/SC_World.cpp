@@ -452,7 +452,7 @@ World* World_New(WorldOptions *inOptions)
 			world->hw->mPassword[0] = 0;
 		}
 #ifdef BELA
-        world->mBelaInitSettings = &(inOptions->mBelaInitSettings); // just a pointer
+        world->mBelaSettings = &(inOptions->mBelaSettings); // just a pointer
 #endif
 
 #ifdef __APPLE__
