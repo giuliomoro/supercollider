@@ -412,18 +412,22 @@ void DigitalOut_next_a_once(DigitalOut *unit, int inNumSamples)
   float *in = IN(1);
   
   float newinput = 0;
-  int lastOut = unit->mLastOut;
+  //int lastOut = unit->mLastOut;
 
   for(unsigned int n = 0; n < inNumSamples; n++) {
 	// read input
 	newinput = in[n];
 	if ( newinput > 0.5 ){ 
 	  digitalWriteOnce(context, n, pinid, GPIO_HIGH );
-	} else if ( lastOut == 1 ) {
-	  digitalWrite(context, n, pinid, GPIO_LOW );
 	}
+	else {
+	  digitalWriteOnce(context, n, pinid, GPIO_LOW );	
+	}
+		 // else if ( lastOut == 1 ) {
+ // 	  digitalWrite(context, n, pinid, GPIO_LOW );
+ // 	}
   }
-  unit->mLastOut = lastOut;
+  //unit->mLastOut = lastOut;
 }
 
 void DigitalOut_next_a(DigitalOut *unit, int inNumSamples)
@@ -468,10 +472,11 @@ void DigitalOut_next_k(DigitalOut *unit, int inNumSamples)
     if (lastOut == 0) {
         lastOut = 1;
         digitalWrite(context, 0, pinid, GPIO_HIGH );
-    } else if ( lastOut == 1 ) {
-        lastOut = 0;
-        digitalWrite(context, 0, pinid, GPIO_LOW );
     }
+  } 
+  else if ( lastOut == 1 ) {
+    lastOut = 0;
+    digitalWrite(context, 0, pinid, GPIO_LOW );
   }
   unit->mLastOut = lastOut;
 }
