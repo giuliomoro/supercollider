@@ -327,7 +327,7 @@ void SC_BelaDriver::staticMAudioSyncSignal(void*){
 
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
-	BelaInitSettings * settings = mWorld->mBelaSettings;
+	BelaInitSettings * settings = mWorld->BelaInitSettings;
 //     Bela_defaultSettings(&settings);
     settings->setup = sc_belaSetup;
     settings->render = sc_belaRender;
