@@ -312,11 +312,19 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	scprintf("SC_BelaDriver: >>DriverSetup\n");
 >>>>>>> BELA: scsynth: manage the analog input and output channels
 	BelaInitSettings settings;
+<<<<<<< HEAD
     Bela_defaultSettings(&settings);
     settings.render = sc_belaRender;
     settings.interleave = 0;
     settings.uniformSampleRate = 1;
     settings.analogOutputsPersist = 0;
+=======
+	Bela_defaultSettings(&settings);	// This function should be called in main() before parsing any command-line arguments. It
+				// sets default values in the data structure which specifies the BeagleRT settings, including
+				// frame sizes, numbers of channels, volume levels and other parameters.
+    settings.setup = sc_belaSetup;
+    settings.render = sc_belaRender;
+>>>>>>> BELA: scsynth: small fixes
 
 	if(mPreferredHardwareBufferFrameSize){
 		settings.periodSize = mPreferredHardwareBufferFrameSize;
@@ -332,7 +340,6 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	settings.useAnalog = 0;
 	
 	if ( mWorld->mBelaAnalogInputChannels > 0 ){
-	  settings.useAnalog = 1;
 	  if ( mWorld->mBelaAnalogInputChannels < 5 ){ // always use a minimum of 4 analog channels, as we cannot read analog I/O faster than audio rate	    
 	    settings.numAnalogInChannels = 4; // analog rate == audio rate
 	  } else {
