@@ -324,6 +324,7 @@ int main(int argc, char* argv[])
 				break;
 #ifdef BELA
 			case 'J' :
+			{
 				// parsing Bela options
 				wordexp_t we;
 				// parse the argument string into a new "argv/argc"-like pair 
