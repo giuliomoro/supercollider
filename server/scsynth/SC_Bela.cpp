@@ -338,10 +338,11 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	if(mPreferredHardwareBufferFrameSize){
 		settings.periodSize = mPreferredHardwareBufferFrameSize;
 	}
-	if(settings.periodSize < mSCBufLength) {
-		scprintf("Error in SC_BelaDriver::DriverSetup(): hardware buffer size (%i) smaller than SC audio buffer size (%i). It is recommended to have them set to the same value, using both the '-Z' and '-z' command-line options respectively.\n",
+	if(settings.periodSize != mSCBufLength) {
+		scprintf("Warning in SC_BelaDriver::DriverSetup(): hardware buffer size (%i) different from SC audio buffer size (%i). Changed the hardware buffer size to be equal to the SC audio buffer size .\n",
             settings.periodSize, mSCBufLength);
-		return false;
+        settings.periodSize = mSCBufLength;
+        
 	}
 	// note that Bela doesn't give us an option to choose samplerate, since it's baked-in.
 	
