@@ -119,6 +119,30 @@ SC_BelaDriver::~SC_BelaDriver()
 	--countInstances;
 }
 
+// setup() is called once before the audio rendering starts.
+// Use it to perform any initialisation and allocation which is dependent
+// on the period size or sample rate.
+//
+// userData holds an opaque pointer to a data structure that was passed
+// in from the call to initAudio().
+//
+// Return true on success; returning false halts the program.
+bool sc_belaSetup(BelaContext* belaContext, void* userData)
+{
+	if(userData == 0){
+		scprintf("SC_BelaDriver: error, setup() got no user data\n");
+		return false;
+	}
+	
+	// cast void pointer
+	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
+	if ( (belaContext->analogInChannels > 0) || (belaContext->analogOutChannels > 0) ){
+	  belaDriver->setAudioFramesPerAnalogFrame( belaContext->audioFrames / belaContext->analogFrames );
+	}
+
+	return true;
+}
+
 void sc_belaRender(BelaContext *belaContext, void *userData)
 {
 	SC_BelaDriver *driver = (SC_BelaDriver*)userData;
