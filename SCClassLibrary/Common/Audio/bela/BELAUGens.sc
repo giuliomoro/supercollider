@@ -7,6 +7,21 @@
 /* input: id of analog pin to read; can be modulated at audiorate
  * output: value of analog analogPin
  */
+MultiplexAnalogIn : UGen {
+    signalRange { ^\unipolar }
+
+    *ar { arg analogPin = 0, muxChannel=0, mul=1.0, add=0.0;
+        ^this.multiNew('audio', analogPin, muxChannel ).madd(mul,add)
+    }
+    *kr { arg analogPin = 0, muxChannel=0, mul=1.0, add=0.0;
+        ^this.multiNew('control', analogPin, muxChannel ).madd(mul,add)
+    }
+}
+
+
+/* input: id of analog pin to read; can be modulated at audiorate
+ * output: value of analog analogPin
+ */
 AnalogIn : UGen {
     signalRange { ^\unipolar }
 

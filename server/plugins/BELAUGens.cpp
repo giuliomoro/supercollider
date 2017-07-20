@@ -39,6 +39,11 @@
 
 static InterfaceTable *ft;
 
+struct MultiplexAnalogIn : public Unit
+{
+// TODO: can we remove this ?
+};
+
 
 struct AnalogIn : public Unit
 {
@@ -88,6 +93,201 @@ struct BelaScopeChannel : public Unit
 };
 */
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MultiplexAnalogIn_next_aaa(MultiplexAnalogIn *unit, int inNumSamples)
+{
+  World *world = unit->mWorld;
+  int bufLength = world->mBufLength;
+  BelaContext *context = world->mBelaContext;
+
+  float *fin = IN(0); // analog in pin, can be modulated
+  float *fmux = IN(1); // mux channel, can be modulated
+  float *out = ZOUT(0);
+  int analogPin = 0;
+  int muxChannel = 0;
+  float analogValue = 0;
+  
+  // context->audioFrames should be equal to inNumSamples
+//   for(unsigned int n = 0; n < context->audioFrames; n++) {
+  for(unsigned int n = 0; n < inNumSamples; n++) {
+	analogPin = (int) fin[n];
+    muxChannel = (int) fmux[n];
+	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
+	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+        rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
+	} else {
+        analogValue = multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
+        if(analogPin == 0)
+        {
+            static int count = 0;
+            count++;
+            if(count % 20000 == 0)
+                rt_printf("AnalogValue = %.3f\n", analogValue);
+        }
+	}
+	*++out = analogValue;
+  }
+}
+
+void MultiplexAnalogIn_next_aak(MultiplexAnalogIn *unit, int inNumSamples)
+{
+  World *world = unit->mWorld;
+  int bufLength = world->mBufLength;
+  BelaContext *context = world->mBelaContext;
+
+  float *fin = IN(0); // analog in pin, can be modulated
+  int muxChannel = (float) IN0(1);
+  float *out = ZOUT(0);
+  int analogPin = 0;
+  float analogValue = 0;
+  
+  // context->audioFrames should be equal to inNumSamples
+//   for(unsigned int n = 0; n < context->audioFrames; n++) {
+  for(unsigned int n = 0; n < inNumSamples; n++) {
+	analogPin = (int) fin[n];
+	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
+	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+        rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
+	} else {
+        analogValue =multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
+        if(analogPin == 0)
+        {
+            static int count = 0;
+            count++;
+            if(count % 20000 == 0)
+                rt_printf("AnalogValue = %.3f\n", analogValue);
+        }
+	}
+	*++out = analogValue;
+  }
+}
+
+void MultiplexAnalogIn_next_aka(MultiplexAnalogIn *unit, int inNumSamples)
+{
+  World *world = unit->mWorld;
+  int bufLength = world->mBufLength;
+  BelaContext *context = world->mBelaContext;
+
+  int analogPin = (float) IN0(0);
+  float *fmux = IN(1); // mux channel, can be modulated
+  float *out = ZOUT(0);
+  int muxChannel = 0;
+  float analogValue = 0;
+  
+  // context->audioFrames should be equal to inNumSamples
+//   for(unsigned int n = 0; n < context->audioFrames; n++) {
+  for(unsigned int n = 0; n < inNumSamples; n++) {
+	muxChannel = (int) fmux[n];
+	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
+	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+        rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
+	} else {
+        analogValue =multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
+        if(analogPin == 0)
+        {
+            static int count = 0;
+            count++;
+            if(count % 20000 == 0)
+                rt_printf("AnalogValue = %.3f\n", analogValue);
+        }
+	}
+	*++out = analogValue;
+  }
+}
+
+void MultiplexAnalogIn_next_akk(MultiplexAnalogIn *unit, int inNumSamples)
+{
+  World *world = unit->mWorld;
+  int bufLength = world->mBufLength;
+  BelaContext *context = world->mBelaContext;
+
+  int analogPin = (float) IN0(0);
+  int muxChannel = (float) IN0(1);
+  float *out = ZOUT(0);
+  float analogValue = 0;
+
+    if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
+        rt_printf( "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+        rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
+        for(unsigned int n = 0; n < inNumSamples; n++) {
+            *++out = 0;
+        }
+    } else {
+        for(unsigned int n = 0; n < inNumSamples; n++) {
+            analogValue = multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
+            if(analogPin == 0)
+            {
+                static int count = 0;
+                count++;
+                if(count % 20000 == 0)
+                    rt_printf("AnalogValue = %.3f\n", analogValue);
+            }
+            *++out = analogValue;
+        }
+    }
+}
+
+void MultiplexAnalogIn_next_kkk(MultiplexAnalogIn *unit, int inNumSamples)
+{
+  World *world = unit->mWorld;
+  int bufLength = world->mBufLength;
+  BelaContext *context = world->mBelaContext;
+
+  int analogPin = (float) IN0(0);
+  int muxChannel = (float) IN0(1);
+
+  if ( (analogPin < 0) || (analogPin >= context->analogInChannels) ){
+    rt_printf( "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+    ZOUT0(0) = 0.0;
+  } else if ( (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ) {
+    rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
+    ZOUT0(0) = 0.0;      
+  } else {
+    ZOUT0(0) = multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
+  }
+}
+
+void MultiplexAnalogIn_Ctor(MultiplexAnalogIn *unit)
+{
+	BelaContext *context = unit->mWorld->mBelaContext;
+  
+	if(context->analogFrames == 0 || context->analogFrames > context->audioFrames) {
+		rt_printf("MultiplexAnalogIn Error: the UGen needs BELA analog enabled, with 4 or 8 channels\n");
+		return;
+	}
+    if(context->multiplexerChannels == 0 ) {
+		rt_printf("MultiplexAnalogIn Error: the UGen needs BELA Multiplexer Capelet enabled\n");
+		return;
+	}
+
+	// initiate first sample
+	MultiplexAnalogIn_next_kkk( unit, 1);  
+	// set calculation method
+        if (unit->mCalcRate == calc_FullRate) {
+            if (INRATE(0) == calc_FullRate) {
+                if ( INRATE(1) == calc_FullRate ) {
+                    SETCALC(MultiplexAnalogIn_next_aaa);
+                } else {
+//                 rt_printf("AnalogIn: aa\n");
+                    SETCALC(MultiplexAnalogIn_next_aak);
+                }
+            } else {
+                if ( INRATE(1) == calc_FullRate ) {
+                    SETCALC(MultiplexAnalogIn_next_aka);                    
+                } else {
+//                 rt_printf("AnalogIn: ak\n");
+                    SETCALC(MultiplexAnalogIn_next_akk);
+                }
+            }
+        } else {
+            if ( (INRATE(0) == calc_FullRate) || (INRATE(1) == calc_FullRate) ) {                
+                rt_printf("MultiplexAnalogIn warning: output rate is control rate, so cannot change analog pin or multiplex channel at audio rate\n");
+            }
+//             rt_printf("AnalogIn: kk\n");
+            SETCALC(MultiplexAnalogIn_next_kkk);
+        }
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1186,6 +1386,7 @@ PluginLoad(BELA)
 {
 	ft = inTable;
 
+	DefineSimpleUnit(MultiplexAnalogIn);
 	DefineSimpleUnit(AnalogIn);
 	DefineSimpleUnit(AnalogOut);
 	DefineSimpleUnit(DigitalIn);
