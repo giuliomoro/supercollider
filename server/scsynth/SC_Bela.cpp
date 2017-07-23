@@ -20,23 +20,7 @@
 	This file contains elements from SC_PortAudio.cpp and SC_Jack.cpp,
 	copyright their authors, and published under the same licence.
 */
-#include "SC_CoreAudio.h"
-#include <stdarg.h>
-#include "SC_Prototypes.h"
-#include "SC_HiddenWorld.h"
-#include "SC_WorldOptions.h"
-#include "SC_Time.hpp"
-#include <math.h>
-#include <stdlib.h>
-#include <posix/time.h>		// For Xenomai clock_gettime()
-
-#include "Bela.h"
-// Xenomai-specific includes
-#include <sys/mman.h>
-#include <native/task.h>
-#include <native/timer.h>
-#include <native/intr.h>
-#include <rtdk.h>
+#include "all_SC_Bela.h"
 
 using namespace std;
 
@@ -80,15 +64,15 @@ public:
 
 	void BelaAudioCallback(BelaContext *belaContext);
 	void SignalReceived(int);
-	static void staticMAudioSyncSignal(void*);
-	static AuxiliaryTask mAudioSyncSignalTask;
+	static void* staticMAudioSyncSignal(void*);
+	static pthread_t mAudioSyncSignalTask;
 	static int countInstances;
 	static SC_SyncCondition* staticMAudioSync;
 private:
 	uint32 mSCBufLength;
 };
 
-AuxiliaryTask SC_BelaDriver::mAudioSyncSignalTask;
+pthread_t SC_BelaDriver::mAudioSyncSignalTask;
 int SC_BelaDriver::countInstances;
 SC_SyncCondition* SC_BelaDriver::staticMAudioSync;
 SC_BelaDriver *mBelaDriverInstance = 0;
@@ -108,7 +92,9 @@ SC_BelaDriver::SC_BelaDriver(struct World *inWorld)
 {
 	mStartHostSecs = 0;
 	mSCBufLength = inWorld->mBufLength;
-	mAudioSyncSignalTask = Bela_createAuxiliaryTask(staticMAudioSyncSignal, 90, "mAudioSyncSignalTask");
+	pthread_create(&mAudioSyncSignalTask, 0, &staticMAudioSyncSignal, NULL);
+	//rt_task_create(&mAudioSyncSignalTask,  "mAudioSyncSignalTask", T_JOINABLE, 90, 0);
+	//rt_task_start(&mAudioSyncSignalTask, staticMAudioSyncSignal, NULL);
 	staticMAudioSync = &mAudioSync;
 	++countInstances;
 	if(countInstances != 1){
@@ -120,6 +106,12 @@ SC_BelaDriver::SC_BelaDriver(struct World *inWorld)
 SC_BelaDriver::~SC_BelaDriver()
 {
 	// Clean up any resources allocated for audio
+	printf("Constructor: resuming\n");
+	//if(!(mAudioSyncSignalTask == 0))
+		//rt_task_resume(&mAudioSyncSignalTask);
+	printf("Joining\n");
+	pthread_join(mAudioSyncSignalTask, NULL);
+	printf("Joined\n");
 	Bela_cleanupAudio();
     scprintf("SC_BelaDriver: >>Bela_cleanupAudio\n");
 	--countInstances;
@@ -151,6 +143,11 @@ void sc_SetDenormalFlags();
 
 void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 {
+	
+	//static int count = 0;
+	//count++;
+	//if(count % 1000 == 0)
+		//scprintf("Count: %d\n", count);
 	struct timespec tspec;
 
 	sc_SetDenormalFlags();
@@ -316,14 +313,21 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 	}
 
 	// this avoids Xenomai mode switches in the audio thread ...
-	Bela_scheduleAuxiliaryTask(mAudioSyncSignalTask);
+	//rt_task_resume(&mAudioSyncSignalTask);
 }
 
-void SC_BelaDriver::staticMAudioSyncSignal(void*){
-	// ... but mode switches are still happening here, in a lower priority thread.
-	// FIXME: this triggers a mode switch in Xenomai.
-	staticMAudioSync->Signal();
-	rt_task_suspend(rt_task_self());
+void* SC_BelaDriver::staticMAudioSyncSignal(void*){
+
+	printf("running staticMaudioSyncSignal\n");
+	//rt_task_suspend(NULL);
+	while(!gShouldStop)
+	{
+		staticMAudioSync->Signal();
+		usleep(100000);
+		//rt_task_suspend(NULL);
+	}
+	printf("exiting staticMaudioSyncSignal\n");
+	return NULL;
 }
 // ====================================================================
 

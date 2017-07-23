@@ -832,9 +832,11 @@ Server {
 			this.bootInProcess;
 			pid = thisProcess.pid;
 		} {
+			var programCommand;
+			programCommand = program ++ options.asOptionsString(addr.port);
 			this.disconnectSharedMemory;
-			pid = unixCmd(program ++ options.asOptionsString(addr.port), { statusWatcher.quit(watchShutDown:false) });
-			("booting server '%' on address: %:%").format(this.name, addr.hostname, addr.port.asString).postln;
+			pid = unixCmd(programCommand, { statusWatcher.quit(watchShutDown:false) });
+			("booting server '%' on address: %:% using % getting pid %").format(this.name, addr.hostname, addr.port.asString, programCommand, pid).postln;
 			if(options.protocol == \tcp, { addr.tryConnectTCP(onComplete) }, onComplete);
 		}
 	}

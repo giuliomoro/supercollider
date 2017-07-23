@@ -200,9 +200,9 @@ struct IsBundle
 };
 IsBundle gIsBundle;
 
+// called form SC_ComPort
 bool ProcessOSCPacket(World *inWorld, OSC_Packet *inPacket)
 {
-	//scprintf("ProcessOSCPacket %d, '%s'\n", inPacket->mSize, inPacket->mData);
 	if (!inPacket) return false;
 	bool result;
 	static_cast<SC_Lock*>(inWorld->mDriverLock)->lock();

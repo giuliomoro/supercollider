@@ -153,10 +153,13 @@ void AllocPool::Reinit()
 	InitAlloc();
 }
 
+#undef DISABLE_MEMORY_POOLS
 void AllocPool::Free(void *inPtr)
 {
 #ifdef DISABLE_MEMORY_POOLS
+	printf("Calling free\n");
 	free(inPtr);
+	printf("called free\n");
 	return;
 #endif
 
@@ -297,7 +300,12 @@ size_t AllocPool::LargestFreeChunk()
 void* AllocPool::Alloc(size_t inReqSize)
 {
 #ifdef DISABLE_MEMORY_POOLS
-	return malloc(inReqSize);
+	printf("calling malloc\n");
+	void* ret = malloc(inReqSize);
+	if(ret == NULL)
+		printf("Returned null from malloc\n");
+	printf("callled malloc\n");
+	return ret;
 #endif
 
 	// OK it has a lot of gotos, but these remove a whole lot of common code
@@ -312,6 +320,10 @@ void* AllocPool::Alloc(size_t inReqSize)
 	// Also fwiw, changed 'victim' in the original code to 'candidate'. 'victim' just bothered me.
 
 
+	static int count = 0;
+	count++;
+	if(count > 1)
+		printf("Multiple threads acessing Alloc");
 	AllocChunkPtr 	candidate;        /* inspected/selected chunk */
 	size_t			candidate_size;   /* its size */
 	AllocChunkPtr 	remainder;        /* remainder from a split */
@@ -393,7 +405,11 @@ void* AllocPool::Alloc(size_t inReqSize)
 	whole_new_area:
 		//ipostbuf("whole_new_area\n");
 		area = NewArea(areaSize);
-		if (!area) return 0;
+		if (!area)
+		{
+			--count;
+			return 0;
+		}
 		candidate = &area->mChunk;
 		candidate_size = candidate->Size();
 		goto return_chunk;
@@ -401,7 +417,11 @@ void* AllocPool::Alloc(size_t inReqSize)
 	split_new_area:
 		//ipostbuf("split_new_area\n");
 		area = NewArea(areaSize);
-		if (!area) return 0;
+		if (!area)
+		{
+			--count;
+			return 0;
+		}
 		candidate = &area->mChunk;
 		candidate_size = candidate->Size();
 		remainder_size = (int)(areaSize - size);
@@ -424,6 +444,7 @@ void* AllocPool::Alloc(size_t inReqSize)
 			check_malloced_chunk(candidate, candidate_size);
 			check_pool();
 			garbage_fill(candidate);
+		--count;
 		return candidate->ToPtr();
 }
 
@@ -431,7 +452,12 @@ void* AllocPool::Alloc(size_t inReqSize)
 void* AllocPool::Realloc(void* inPtr, size_t inReqSize)
 {
 #ifdef DISABLE_MEMORY_POOLS
-	return realloc(inPtr, inReqSize);
+	printf("calling realloc\n");
+	void* ret = realloc(inPtr, inReqSize);
+	if(ret == NULL)
+		printf("Returned null from realloc\n");
+	printf("called realloc\n");
+	return ret;
 #endif
 
 
