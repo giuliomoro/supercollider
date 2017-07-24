@@ -20,7 +20,7 @@
 	This file contains elements from SC_PortAudio.cpp and SC_Jack.cpp,
 	copyright their authors, and published under the same licence.
 */
-#include "all_SC_Bela.h"
+#include "SC_Bela.h"
 
 using namespace std;
 

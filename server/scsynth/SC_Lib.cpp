@@ -123,7 +123,13 @@ SCErr SC_LibCmd::Perform(struct World *inWorld, int inSize, char *inData, ReplyA
 	SCErr err;
 //	int kSendError = 1;		// i.e., 0x01 | 0x02;
 	try {
-		err = (mFunc)(inWorld, inSize, inData, inReply);
+		if(inSize == 12 && strcmp(inData, ",ii") == 0)
+		{
+			printf("Here\n");
+			err = (mFunc)(inWorld, inSize, inData, inReply);
+		}
+		else
+			err = (mFunc)(inWorld, inSize, inData, inReply);
 	} catch (int iexc) {
 		err = iexc;
 	} catch (std::exception& exc) {
