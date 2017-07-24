@@ -285,25 +285,27 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 			// copy touched outputs
 			tch = outTouched;
 
-			for (int k = 0; k < minOutputs; ++k) {
-				if (*tch++ == bufCounter) {
+            for (int k = 0; k < minOutputs; ++k) {
+                if (*tch++ == bufCounter) {
                     memcpy(
                         belaContext->audioOut + k * bufFrames,
                         outBuses + k * bufFrames,
                         sizeof(belaContext->audioOut[0]) * bufFrames
                     );
-				}
+                }
 			}
 
 			for (int k = minOutputs; k < ( minOutputs + anaOutputs ); ++k) {
-				unsigned int analogChannel = k - minOutputs; // starting at 0
-                memcpy(
-                    belaContext->analogOut,
-                    outBuses + analogChannel * bufFrames,
-                    sizeof(belaContext->analogOut[0]) * bufFrames
-                );
-                // analogWriteOnceNI( belaContext, n / mAudioFramesPerAnalogFrame, analogPin, *src * 0.5 + 0.5 ); // used to be like this 
+                if (*tch++ == bufCounter) {
+                    unsigned int analogChannel = k - minOutputs; // starting at 0
+                    memcpy(
+                        belaContext->analogOut + analogChannel * bufFrames,
+                        outBuses + k * bufFrames,
+                        sizeof(belaContext->analogOut[0]) * bufFrames
+                    );
+				}
 			}
+
 			// advance OSC time
 			mOSCbuftime = oscTime = nextTime;
 		}
