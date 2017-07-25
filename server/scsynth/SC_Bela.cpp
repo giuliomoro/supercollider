@@ -28,7 +28,11 @@
 #include "SC_Time.hpp"
 #include <math.h>
 #include <stdlib.h>
-#include <posix/time.h>		// For Xenomai clock_gettime()
+#include <posix/time.h> // for struct timespec and clockid_t
+extern "C" {
+// This will be wrapped by Xenomai without requiring linker flags
+	int __wrap_clock_gettime(clockid_t clock_id, struct timespec *tp);
+}
 
 #include "Bela.h"
 // Xenomai-specific includes
@@ -162,7 +166,7 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 	// NOTE: code here is adapted from the SC_Jack.cpp, the version not using the DLL
 
 	// Use Xenomai-friendly clock_gettime() -- note that this requires a -wrap argument to build
-	clock_gettime(CLOCK_HOST_REALTIME, &tspec);
+	__wrap_clock_gettime(CLOCK_HOST_REALTIME, &tspec);
 
 	double hostSecs = (double)tspec.tv_sec + (double)tspec.tv_nsec * 1.0e-9;
 	double sampleTime = static_cast<double>(belaContext->audioFramesElapsed);
