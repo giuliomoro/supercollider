@@ -114,17 +114,17 @@ void MultiplexAnalogIn_next_aaa(MultiplexAnalogIn *unit, int inNumSamples)
 	analogPin = (int) fin[n];
     muxChannel = (int) fmux[n];
 	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
-	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+	    rt_printf( "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
         rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
 	} else {
         analogValue = multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-        if(analogPin == 0)
-        {
-            static int count = 0;
-            count++;
-            if(count % 20000 == 0)
-                rt_printf("AnalogValue = %.3f\n", analogValue);
-        }
+//         if(analogPin == 0)
+//         {
+//             static int count = 0;
+//             count++;
+//             if(count % 20000 == 0)
+//                 rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
+//         }
 	}
 	*++out = analogValue;
   }
@@ -147,17 +147,17 @@ void MultiplexAnalogIn_next_aak(MultiplexAnalogIn *unit, int inNumSamples)
   for(unsigned int n = 0; n < inNumSamples; n++) {
 	analogPin = (int) fin[n];
 	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
-	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+	    rt_printf( "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
         rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
 	} else {
         analogValue =multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-        if(analogPin == 0)
-        {
-            static int count = 0;
-            count++;
-            if(count % 20000 == 0)
-                rt_printf("AnalogValue = %.3f\n", analogValue);
-        }
+//         if(analogPin == 0)
+//         {
+//             static int count = 0;
+//             count++;
+//             if(count % 20000 == 0)
+//                 rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
+//         }
 	}
 	*++out = analogValue;
   }
@@ -180,17 +180,17 @@ void MultiplexAnalogIn_next_aka(MultiplexAnalogIn *unit, int inNumSamples)
   for(unsigned int n = 0; n < inNumSamples; n++) {
 	muxChannel = (int) fmux[n];
 	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
-	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+	    rt_printf( "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
         rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
 	} else {
         analogValue =multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-        if(analogPin == 0)
-        {
-            static int count = 0;
-            count++;
-            if(count % 20000 == 0)
-                rt_printf("AnalogValue = %.3f\n", analogValue);
-        }
+//         if(analogPin == 0)
+//         {
+//             static int count = 0;
+//             count++;
+//             if(count % 20000 == 0)
+//                 rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
+//         }
 	}
 	*++out = analogValue;
   }
@@ -216,13 +216,13 @@ void MultiplexAnalogIn_next_akk(MultiplexAnalogIn *unit, int inNumSamples)
     } else {
         for(unsigned int n = 0; n < inNumSamples; n++) {
             analogValue = multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-            if(analogPin == 0)
-            {
-                static int count = 0;
-                count++;
-                if(count % 20000 == 0)
-                    rt_printf("AnalogValue = %.3f\n", analogValue);
-            }
+//             if(analogPin == 0)
+//             {
+//                 static int count = 0;
+//                 count++;
+//                 if(count % 20000 == 0)
+//                     rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
+//             }
             *++out = analogValue;
         }
     }
@@ -311,13 +311,13 @@ void AnalogIn_next_aa(AnalogIn *unit, int inNumSamples)
 	    rt_printf( "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
 	} else {
         analogValue = analogReadNI(context, n, analogPin);
-        if(analogPin == 0)
-        {
-            static int count = 0;
-            count++;
-            if(count % 20000 == 0)
-                rt_printf("AnalogValue = %.3f\n", analogValue);
-        }
+//         if(analogPin == 0)
+//         {
+//             static int count = 0;
+//             count++;
+//             if(count % 20000 == 0)
+//                 rt_printf("AnalogValue = %.3f\n", analogValue);
+//         }
 	}
 	*++out = analogValue;
   }
@@ -341,13 +341,13 @@ void AnalogIn_next_ak(AnalogIn *unit, int inNumSamples)
     } else {
         for(unsigned int n = 0; n < inNumSamples; n++) {
             analogValue = analogReadNI(context, n, analogPin);
-            if(analogPin == 0)
-            {
-                static int count = 0;
-                count++;
-                if(count % 20000 == 0)
-                    rt_printf("AnalogValue = %.3f\n", analogValue);
-            }
+//             if(analogPin == 0)
+//             {
+//                 static int count = 0;
+//                 count++;
+//                 if(count % 20000 == 0)
+//                     rt_printf("AnalogValue = %.3f\n", analogValue);
+//             }
             *++out = analogValue;
         }
     }
