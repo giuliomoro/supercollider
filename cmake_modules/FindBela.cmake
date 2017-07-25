@@ -63,6 +63,8 @@ else (BELA_INCLUDE_DIRS)
   set(BELA_SOURCES
     ${BELA_SOURCE_FILES}
   )
+  list(REMOVE_ITEM BELA_SOURCES ${BELA_SOURCES_DIR}/default_libpd_render.cpp)
+  list(REMOVE_ITEM BELA_SOURCES ${BELA_SOURCES_DIR}/default_main.cpp)
 
   set(BELA_LIBRARIES
       "-L/usr/xenomai/lib -L/usr/lib/arm-linux-gnueabihf -lrt -lnative -lxenomai -lprussdrv -lpthread_rt"   # TODO is this the best portable way to link these?
