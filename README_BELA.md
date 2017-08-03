@@ -7,10 +7,10 @@ See [README.md](README.md) for the main SuperCollider readme.
 
 This file is Dan's, Marije's and Giulio's notes about compiling SC on [Bela](http://bela.io) platform.
 
-This branch `bela_hackery_v01` contains that plus other modifications to get the SC source code master branch building.
+This branch contains that plus other modifications to get the SC source code master branch building.
 The main addition in this branch is a **Xenomai/Bela audio driver for scsynth**, to use Bela's ultra-low-latency audio thread *instead* of jack/portaudio, and **plugins to access the analog and digital channels of the Bela-cape**
 
-> *NOTE:* This guide assumes you have the [Bela image v0.2.0b](https://github.com/BelaPlatform/bela-image/releases/tag/v0.2.0b) (or higher).
+> *NOTE:* This guide assumes you have the [Bela image v0.2.0b](https://github.com/BelaPlatform/bela-image/releases/tag/v0.2.0b) (or higher) and that you have the most recent version of the `dev-libbela` branch of the [Bela code](https://github.com/BelaPlatform/Bela/) checked out in the `/root/Bela` folder of your Bela.
 
 > *NOTE:* You need to update Bela to the [Bela dev-lib](https://github.com/BelaPlatform/Bela/tree/dev-libbela) branch for this version to compile.
 
@@ -46,33 +46,15 @@ Actually I added this line to my /etc/fstab so the partition automounts:
 Get the source code
 ===================
 
-My modified source code is in this git branch here, called `bela_hackery_v02`. If your Bela is still connected to the network you can grab it directly:
+My modified source code is in this git branch here. If your Bela is still connected to the network you can grab it directly:
 
     cd /extrabela
-    git clone --recursive -b bela_hackery_v02 https://github.com/sensestage/supercollider.git
+    git clone --recursive -b bela_hackery_v02_master https://github.com/sensestage/supercollider.git
     cd supercollider
-
-I believe that the Bela system image already includes most of SuperCollider's build dependencies. The updates to cmake/gcc described above are incurred because I'm using the latest `master` version of SC rather than 3.8.
 
 
 Compiling and installing
 ========================
-
-Update apt source list:
-    apt-get update
-
-We need gcc-4.8 / g++-4.8 as 4.9 causes a weird bug (https://github.com/supercollider/supercollider/issues/1450):
-
-    apt-get install gcc-4.8 g++-4.8
-
-Get the newest cmake:
-
-    apt-get -t jessie install cmake    # need this updated version
-
-Get dependent libraries:
-    
-    apt-get install libudev-dev
-
 
 Before we compile, here are two optional steps to make your workflow faster
 
