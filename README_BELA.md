@@ -12,6 +12,8 @@ The main addition in this branch is a **Xenomai/Bela audio driver for scsynth**,
 
 > *NOTE:* This guide assumes you have the [Bela image v0.2.0b](https://github.com/BelaPlatform/bela-image/releases/tag/v0.2.0b) (or higher).
 
+> *NOTE:* You need to update Bela to the [Bela dev-lib](https://github.com/BelaPlatform/Bela/tree/dev-libbela) branch for this version to compile.
+
 All of the commands here are to be executed *on the Bela device itself*. Normally you would SSH to it from a computer connected by USB, in order to do the following stuff.
 
 Preparation
@@ -44,13 +46,13 @@ Actually I added this line to my /etc/fstab so the partition automounts:
 Get the source code
 ===================
 
-My modified source code is in this git branch here, called `bela_hackery`. If your Bela is still connected to the network you can grab it directly:
+My modified source code is in this git branch here, called `bela_hackery_v02`. If your Bela is still connected to the network you can grab it directly:
 
     cd /extrabela
-    git clone --recursive -b bela_hackery_v01_master https://github.com/sensestage/supercollider.git
+    git clone --recursive -b bela_hackery_v02 https://github.com/sensestage/supercollider.git
     cd supercollider
 
-I believe that the Bela system image already includes most of SuperCollider's build dependencies. The updates to cmake/gcc described above are incurred because I'm using the latest `master` version of SC rather than 3.6.
+I believe that the Bela system image already includes most of SuperCollider's build dependencies. The updates to cmake/gcc described above are incurred because I'm using the latest `master` version of SC rather than 3.8.
 
 
 Compiling and installing
