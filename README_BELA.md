@@ -60,8 +60,10 @@ Before we compile, here are two optional steps to make your workflow faster
 
 1. installing `ccache` makes repeated builds faster, if you have spare disk space for it. It's especially helpful if you're going to be changing the cmake build scripts.
 
-    mkdir /root/.ccache
-    echo "cache_dir = '/extrabela/ccache'" >> ~/.ccache/ccache.conf
+```
+mkdir /root/.ccache
+echo "cache_dir = '/extrabela/ccache'" >> ~/.ccache/ccache.conf
+```
 
 2. alternatively, use `distcc` to make all your builds faster by off-loading the actual compilation to your host computer. You need to:
 * install a cross-compiler for gcc-4.8 on your host (e.g.: [this](http://bela.io/downloads/gcc-linaro-arm-linux-gnueabihf-2014.04_mac.pkg) for Mac or a `g++-4.8-arm-linux-gnueabihf` package for your Linux distro)
