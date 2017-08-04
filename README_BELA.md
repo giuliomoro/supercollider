@@ -56,6 +56,23 @@ My modified source code is in this git branch here. If your Bela is still connec
 Compiling and installing
 ========================
 
+Update apt source list:
+
+    apt-get update
+
+We need gcc-4.8 / g++-4.8 as 4.9 causes a weird bug (https://github.com/supercollider/supercollider/issues/1450):
+
+    apt-get install -t jessie gcc-4.8 g++-4.8
+
+Get the newest cmake:
+
+    apt-get -t jessie install cmake    # need this updated version
+
+Get dependent libraries:
+    
+    apt-get install -t jessie libudev-dev
+
+
 Before we compile, here are two optional steps to make your workflow faster
 
 1. installing `ccache` makes repeated builds faster, if you have spare disk space for it. It's especially helpful if you're going to be changing the cmake build scripts.
