@@ -398,7 +398,11 @@ extern void ElapsedTimeToChrono(double elapsed, std::chrono::system_clock::time_
 
 void SC_TerminalClient::tick( const boost::system::error_code& error )
 {
-	mTimer.cancel();
+	if (error == boost::system::errc::success) {
+		mTimer.cancel();
+	} else {
+		return;
+	}
 
 	double secs;
 	lock();
