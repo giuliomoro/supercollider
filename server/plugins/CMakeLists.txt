@@ -70,6 +70,9 @@ foreach(plugin ${plugin_sources})
 endforeach(plugin)
 
 if(AUDIOAPI STREQUAL bela)
+	# The Bela lib will have its own set of libraries and includes
+	# However, the Bela audio backend for SC has some direct calls to Xenomai
+	# Therefore we need to get flags for those as well
 	find_package(Xenomai)
 	if(NOT XENOMAI_FOUND)
 		message(FATAL_ERROR "Bela selected as audio API, but Xenomai development files not found")
@@ -81,8 +84,8 @@ if(AUDIOAPI STREQUAL bela)
 	message(STATUS "bela libs: ${BELA_LIBRARIES}")
 	if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 		# recommended compile flags for beaglebone etc; set here because bela api flag directly implies the architecture
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${BELA_C_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BELA_CXX_FLAGS}")
 	endif()
 endif()
 
@@ -94,7 +97,7 @@ if (BELA_FOUND)
 	)
 	set(belaugens BELAUGens)
  	add_definitions("-DBELA" ${XENOMAI_DEFINITIONS} ${BELA_DEFINITIONS})
- 	include_directories(${XENOMAI_INCLUDE_DIRS})
+	include_directories(${XENOMAI_INCLUDE_DIRS})
 	include_directories(${BELA_INCLUDE_DIRS})
 	
 # 	set(CMAKE_EXECUTABLE_RUNTIME_C_FLAG       "-Wl,-wrap,clock_gettime,-rpath,")

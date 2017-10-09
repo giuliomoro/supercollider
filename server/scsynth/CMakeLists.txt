@@ -26,20 +26,24 @@ elseif(AUDIOAPI STREQUAL portaudio AND ((NOT WIN32) OR MSYS)) # MSYS like Apple
 		message(FATAL_ERROR "Portaudio selected as audio API, but development files not found")
 	endif()
 elseif(AUDIOAPI STREQUAL bela)
-	find_package(Xenomai)
-	if(NOT XENOMAI_FOUND)
-		message(FATAL_ERROR "Bela selected as audio API, but Xenomai development files not found")
-	endif()
-	find_package(Bela)
-	if(NOT BELA_FOUND)
-		message(FATAL_ERROR "Bela selected as audio API, but Bela development files not found")
-	endif()
-	message(STATUS "bela libs: ${BELA_LIBRARIES}")
-	if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
-		# recommended compile flags for beaglebone etc; set here because bela api flag directly implies the architecture
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a -mtune=cortex-a8 -mfloat-abi=hard -mfpu=neon")
-	endif()
+    # The Bela lib will have its own set of libraries and includes
+    # However, the Bela audio backend for SC has some direct calls to Xenomai
+    # Therefore we need to get flags for those as well
+    find_package(Xenomai)
+    if(NOT XENOMAI_FOUND)
+        message(FATAL_ERROR "Bela selected as audio API, but Xenomai development files not found")
+    endif()
+    find_package(Bela)
+    if(NOT BELA_FOUND)
+        message(FATAL_ERROR "Bela selected as audio API, but Bela development files not found")
+    endif()
+    message(STATUS "bela libs: ${BELA_LIBRARIES}")
+    if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
+        # recommended compile flags for beaglebone etc; set here because bela api flag directly implies the architecture
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${BELA_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BELA_CXX_FLAGS}")
+    endif()
+>>>>>>> Now builds with libbela and xenomai-3, relies on xeno-config and bela-config. Not sure if it still builds with xenomai-2.6.
 endif()
 message(STATUS "Audio API: ${AUDIOAPI}")
 
@@ -118,7 +122,6 @@ elseif (AUDIOAPI STREQUAL portaudio)
 	include_directories(${PORTAUDIO_INCLUDE_DIRS})
 elseif (AUDIOAPI STREQUAL bela)
 	list(APPEND scsynth_sources SC_Bela.cpp)
-	list(APPEND scsynth_sources ${BELA_SOURCES})
 	add_definitions("-DSC_AUDIO_API=SC_AUDIO_API_BELA" "-DBELA" ${XENOMAI_DEFINITIONS} ${BELA_DEFINITIONS})
 	include_directories(${XENOMAI_INCLUDE_DIRS})
 	include_directories(${BELA_INCLUDE_DIRS})
@@ -236,7 +239,6 @@ add_executable(scsynth scsynth_main.cpp)
 target_link_libraries(scsynth libscsynth)
 
 if(AUDIOAPI STREQUAL bela)
-	# This tells Xenomai to wrap the clock_gettime() call in its own version
 	target_link_libraries(scsynth ${XENOMAI_LIBRARIES} ${BELA_LIBRARIES})
 endif()
 

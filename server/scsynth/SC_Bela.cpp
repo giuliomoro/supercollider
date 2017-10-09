@@ -1,7 +1,8 @@
 /*
-	Bela (BeagleRT) audio driver for SuperCollider.
+	Bela  audio driver for SuperCollider.
 	Copyright (c) 2015 Dan Stowell. All rights reserved.
 	Copyright (c) 2016 Marije Baalman. All rights reserved.
+	Copyright (c) 2016 Giulio Moro. All rights reserved.
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -28,19 +29,24 @@
 #include "SC_Time.hpp"
 #include <math.h>
 #include <stdlib.h>
-#include <posix/time.h> // for struct timespec and clockid_t
+
+#ifdef XENOMAI_SKIN_native
+#include <posix/time.h> // needed for CLOCK_HOST_REALTIME
+#endif
+#ifdef XENOMAI_SKIN_posix
+#include <cobalt/time.h> // needed for CLOCK_HOST_REALTIME
+#endif
+
 extern "C" {
 // This will be wrapped by Xenomai without requiring linker flags
 	int __wrap_clock_gettime(clockid_t clock_id, struct timespec *tp);
+// this is provided by Xenomai
+	int rt_vprintf(const char *format, va_list ap);
 }
 
 #include "Bela.h"
 // Xenomai-specific includes
 #include <sys/mman.h>
-#include <native/task.h>
-#include <native/timer.h>
-#include <native/intr.h>
-#include <rtdk.h>
 
 using namespace std;
 
@@ -112,11 +118,11 @@ SC_BelaDriver::SC_BelaDriver(struct World *inWorld)
 {
 	mStartHostSecs = 0;
 	mSCBufLength = inWorld->mBufLength;
-	mAudioSyncSignalTask = Bela_createAuxiliaryTask(staticMAudioSyncSignal, 90, "mAudioSyncSignalTask");
+
 	staticMAudioSync = &mAudioSync;
 	++countInstances;
 	if(countInstances != 1){
-		printf("Error: there are %d instances of SC_BelaDriver running at the same time. Exiting\n", countInstances);
+		fprintf(stderr, "Error: there are %d instances of SC_BelaDriver running at the same time. Exiting\n", countInstances);
 		exit(1);
 	}
 }
@@ -327,13 +333,12 @@ void SC_BelaDriver::staticMAudioSyncSignal(void*){
 	// ... but mode switches are still happening here, in a lower priority thread.
 	// FIXME: this triggers a mode switch in Xenomai.
 	staticMAudioSync->Signal();
-	rt_task_suspend(rt_task_self());
 }
 // ====================================================================
 
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
-	BelaInitSettings settings;
+    BelaInitSettings settings;
     Bela_defaultSettings(&settings);
     settings.setup = sc_belaSetup;
     settings.render = sc_belaRender;
@@ -463,12 +468,17 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
             scprintf( "Speakers are not muted.\n" );
         }
 
-	// Initialise the PRU audio device. This function prepares audio rendering in BeagleRT. It should be called from main() sometime
+	// Initialise the PRU audio device. This function prepares audio rendering in Bela. It should be called from main() sometime
 	// after command line option parsing has finished. It will initialise the rendering system, which
 	// in the process will result in a call to the user-defined setup() function.
 	if(Bela_initAudio(&settings, this) != 0) {
 		scprintf("Error in SC_BelaDriver::DriverSetup(): unable to initialise audio\n");
 		return false;
+	}
+	mAudioSyncSignalTask = Bela_createAuxiliaryTask(staticMAudioSyncSignal, 90, "mAudioSyncSignalTask"); // needs to be created after the call to Bela_initAudio()
+	if(!mAudioSyncSignalTask){
+		fprintf(stderr, "Error: unable to create Bela auxiliary task\n");
+		exit(1);
 	}
 
 	*outNumSamples = settings.periodSize;
@@ -484,7 +494,9 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 bool SC_BelaDriver::DriverStart()
 {
     SetPrintFunc((PrintFunc)rt_vprintf); // Use Xenomai's realtime-friendly printing function
+#ifdef XENOMAI_SKIN_native
     rt_print_auto_init(1); // Make sure the buffers for rt_vprintf are actually initialized.
+#endif
     if(Bela_startAudio()) {
         scprintf("Error in SC_BelaDriver::DriverStart(): unable to start real-time audio\n");
         return false;

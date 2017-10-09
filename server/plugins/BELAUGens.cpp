@@ -28,12 +28,9 @@
 #include <atomic>
 
 #include "Bela.h"
-// Xenomai-specific includes
-#include <sys/mman.h>
-#include <native/task.h>
-#include <native/timer.h>
-#include <native/intr.h>
-#include <rtdk.h>
+// These functions are provided by xenomai
+int rt_printf(const char *format, ...);
+int rt_fprintf(FILE *stream, const char *format, ...);
 
 #include "SC_PlugIn.h"
 
@@ -112,12 +109,12 @@ void MultiplexAnalogIn_next_aaa(MultiplexAnalogIn *unit, int inNumSamples)
 //   for(unsigned int n = 0; n < context->audioFrames; n++) {
   for(unsigned int n = 0; n < inNumSamples; n++) {
 	analogPin = (int) fin[n];
-    muxChannel = (int) fmux[n];
+	muxChannel = (int) fmux[n];
 	if ( (analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0) || ( muxChannel > context->multiplexerChannels) ){
-	    rt_printf( "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
-        rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
+		rt_printf( "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels, analogPin );
+		rt_printf( "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0, context->multiplexerChannels, muxChannel );
 	} else {
-        analogValue = multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
+	analogValue = multiplexerAnalogRead(context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
 //         if(analogPin == 0)
 //         {
 //             static int count = 0;

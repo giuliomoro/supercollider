@@ -1,3 +1,6 @@
+This code will build on Bela image 3.0 and above (requires libbela and xenomai 3).
+======================================
+
 See [SuperCollider-on-Bela](https://github.com/BelaPlatform/Bela/wiki/SuperCollider-on-Bela) for general information on SuperCollider on Bela.
 
 Compiling SuperCollider scsynth on Bela
@@ -10,9 +13,9 @@ This file is Dan's, Marije's and Giulio's notes about compiling SC on [Bela](htt
 This branch contains that plus other modifications to get the SC source code master branch building.
 The main addition in this branch is a **Xenomai/Bela audio driver for scsynth**, to use Bela's ultra-low-latency audio thread *instead* of jack/portaudio, and **plugins to access the analog and digital channels of the Bela-cape**
 
-> *NOTE:* This guide assumes you have the [Bela image v0.2.0b](https://github.com/BelaPlatform/bela-image/releases/tag/v0.2.0b) (or higher) and that you have the most recent version of the `dev-libbela` branch of the [Bela code](https://github.com/BelaPlatform/Bela/) checked out in the `/root/Bela` folder of your Bela.
+> *NOTE:* This guide assumes you have the [Bela image v0.2.0b](https://github.com/BelaPlatform/bela-image/releases/tag/v0.2.0b) or later. Where differences arise between versions below, you will see a note with "vX.X.X"
 
-> *NOTE:* You need to update Bela to the [Bela dev-lib](https://github.com/BelaPlatform/Bela/tree/dev-libbela) branch for this version to compile.
+> *NOTE:* You need to get the latest version of the Bela code in order for Supercollider to compile.
 
 All of the commands here are to be executed *on the Bela device itself*. Normally you would SSH to it from a computer connected by USB, in order to do the following stuff.
 
@@ -56,9 +59,14 @@ My modified source code is in this git branch here. If your Bela is still connec
 Compiling and installing
 ========================
 
+You will need to connect your board to the internet in order to install the pre-requisites.
+
 Update apt source list:
 
     apt-get update
+
+
+### On Bela image v0.2.x(Debian Wheezy):
 
 We need gcc-4.8 / g++-4.8 as 4.9 causes a weird bug (https://github.com/supercollider/supercollider/issues/1450):
 
@@ -72,6 +80,11 @@ Get dependent libraries:
     
     apt-get install -t jessie libudev-dev
 
+### On Bela image v0.3.x(Debian Stretch):
+
+We need a couple of libraries:
+
+    apt-get install libxt-dev libx11-dev libudev-dev
 
 Before we compile, here are two optional steps to make your workflow faster
 
@@ -105,13 +118,13 @@ Then here's how to build:
     cd /extrabela/build
 
     # here's the command WITHOUT ccache
-    cmake /extrabela/supercollider -DCMAKE_C_COMPILER=gcc-4.8 -DCMAKE_CXX_COMPILER=g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
+    cmake /extrabela/supercollider -DCMAKE_C_COMPILER=gcc-4.8 -DCMAKE_CXX_COMPILER=g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSC_HIDAPI=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
 
     # or here's the command WITH ccache
-    cmake /extrabela/supercollider -DCMAKE_C_COMPILER=/usr/lib/ccache/gcc-4.8 -DCMAKE_CXX_COMPILER=/usr/lib/ccache/g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
+    cmake /extrabela/supercollider -DCMAKE_C_COMPILER=/usr/lib/ccache/gcc-4.8 -DCMAKE_CXX_COMPILER=/usr/lib/ccache/g++-4.8 -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSC_HIDAPI=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
 
 	# or here's the command WITH distcc (it will infer the compilers from the `export CC CXX` above
-    cmake /extrabela/supercollider -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
+    cmake /extrabela/supercollider -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSC_HIDAPI=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
     make
 
 The `make` step will take a little while, about 30 minutes when using plain `gcc` or `ccache` (you can try `make -j2` or `make -j3` with `distcc`), more like 10 minutes when using `distcc`. It seems it is stuck for a long time at compiling the BinaryOpUGens, but it will get past that.
