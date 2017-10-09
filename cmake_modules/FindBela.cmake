@@ -15,78 +15,55 @@
 #  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 
-if (BELA_INCLUDE_DIRS)
+if (BELA_CFLAGS AND BELA_CXXFLAGS AND BELA_LDFLAGS)
   # in cache already
   set(BELA_FOUND TRUE)
-else (BELA_INCLUDE_DIRS)
-  # use pkg-config to get the directories and then use these values
-  # in the FIND_PATH() and FIND_LIBRARY() calls
-  if (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 4)
-    include(UsePkgConfig)
-    pkgconfig(xenomai _BELA_INCLUDEDIR _BELA_LIBDIR _BELA_LDFLAGS _BELA_CFLAGS)
-  else (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 4)
-    find_package(PkgConfig)
-    if (PKG_CONFIG_FOUND)
-      pkg_check_modules(_BELA xenomai)
-    endif (PKG_CONFIG_FOUND)
-  endif (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 4)
-  find_path(BELA_INCLUDE_DIR
+else (BELA_CFLAGS AND BELA_CXXFLAGS AND BELA_LDFLAGS)
+  # Bela comes with its own ...-config program to get configuration flags
+  find_program(BELA_CONFIG
     NAMES
-      Bela.h
+      bela-config
     PATHS
-      ${_BELA_INCLUDEDIR}
-      /root/Bela/include
-      /usr/include
-      /usr/local/include
-      /opt/local/include
-      /sw/include
+      /root/Bela/resources/bin
+      $ENV{BELA_ROOT}/resources/bin
+      /usr/local/bin
+      /usr/bin
   )
+message("Searching for BELA man: config ${BELA_CONFIG}")
 
-  find_path(BELA_SOURCES_DIR
-    NAMES
-      RTAudio.cpp
-    PATHS
-      ${_BELA_SOURCES_DIR}
-      /root/Bela/core
-  )
+  if (BELA_CONFIG)
+    execute_process(COMMAND ${BELA_CONFIG} --defines OUTPUT_VARIABLE BELA_DEFINITIONS)
+    string(STRIP "${BELA_DEFINITIONS}" BELA_DEFINITIONS)
+    execute_process(COMMAND ${BELA_CONFIG} --includes OUTPUT_VARIABLE BELA_INCLUDE_DIRS)
+    string(STRIP "${BELA_INCLUDE_DIRS}" BELA_INCLUDE_DIRS)
+    execute_process(COMMAND ${BELA_CONFIG} --libraries OUTPUT_VARIABLE BELA_LIBRARIES)
+    string(STRIP "${BELA_LIBRARIES}" BELA_LIBRARIES)
+    execute_process(COMMAND ${BELA_CONFIG} --cflags OUTPUT_VARIABLE BELA_C_FLAGS)
+    string(STRIP "${BELA_C_FLAGS}" BELA_C_FLAGS)
+    execute_process(COMMAND ${BELA_CONFIG} --cxxflags OUTPUT_VARIABLE BELA_CXX_FLAGS)
+    string(STRIP "${BELA_CXX_FLAGS}" BELA_CXX_FLAGS)
+  endif (BELA_CONFIG)
 
-  file(GLOB BELA_SOURCE_FILES ${BELA_SOURCES_DIR}/*.c ${BELA_SOURCES_DIR}/*.cpp)
-
-  if (BELA_INCLUDE_DIR)
+  if (BELA_CONFIG)
     set(BELA_FOUND TRUE)
-  endif (BELA_INCLUDE_DIR)
-
-  set(BELA_INCLUDE_DIRS
-    ${BELA_INCLUDE_DIR}
-  )
-
-  set(BELA_SOURCES
-    ${BELA_SOURCE_FILES}
-  )
-  list(REMOVE_ITEM BELA_SOURCES ${BELA_SOURCES_DIR}/default_libpd_render.cpp)
-  list(REMOVE_ITEM BELA_SOURCES ${BELA_SOURCES_DIR}/default_main.cpp)
-
-  set(BELA_LIBRARIES
-      "-L/usr/xenomai/lib -L/usr/lib/arm-linux-gnueabihf -lrt -lnative -lxenomai -lprussdrv -lpthread_rt"   # TODO is this the best portable way to link these?
-  )
-
-  if (BELA_INCLUDE_DIRS)
-     set(BELA_FOUND TRUE)
-  endif (BELA_INCLUDE_DIRS)
+  endif (BELA_CONFIG)
 
   if (BELA_FOUND)
     if (NOT BELA_FIND_QUIETLY)
-      message(STATUS "Found Bela headers: ${BELA_INCLUDE_DIRS}")
-      message(STATUS "Found Bela sources: ${BELA_SOURCES}")
+      execute_process(COMMAND ${BELA_CONFIG} --prefix OUTPUT_VARIABLE BELA_PREFIX)
+      message(STATUS "Found Bela: ${BELA_PREFIX}")
+      message(STATUS "BELA_DEFINITIONS: ${BELA_DEFINITIONS}")
+      message(STATUS "BELA_INCLUDE_DIRS: ${BELA_INCLUDE_DIRS}")
+      message(STATUS "BELA_LIBRARIES: ${BELA_LIBRARIES}")
+      message(STATUS "BELA_C_FLAGS: ${BELA_C_FLAGS}")
+      message(STATUS "BELA_CXX_FLAGS: ${BELA_CXX_FLAGS}")
     endif (NOT BELA_FIND_QUIETLY)
   else (BELA_FOUND)
     if (BELA_FIND_REQUIRED)
       message(FATAL_ERROR "Could not find BELA")
     endif (BELA_FIND_REQUIRED)
   endif (BELA_FOUND)
+# show the BELA_ variables only in the advanced view
+mark_as_advanced(BELA_CFLAGS BELA_CXXFLAGS BELA_LDFLAGS)
 
-  # show the BELA_INCLUDE_DIRS variables only in the advanced view
-  mark_as_advanced(BELA_INCLUDE_DIRS)
-
-endif (BELA_INCLUDE_DIRS)
-
+endif (BELA_CFLAGS AND BELA_CXXFLAGS AND BELA_LDFLAGS)
