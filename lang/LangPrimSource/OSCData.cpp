@@ -89,7 +89,7 @@ inline bool IsBundle(char* ptr)
 
 const int ivxNetAddr_Hostaddr = 0;
 const int ivxNetAddr_PortID = 1;
-const int ivxNetAddr_Hostname = 2;
+// const int ivxNetAddr_Hostname = 2; // unused
 const int ivxNetAddr_Socket = 3;
 
 static int makeSynthMsgWithTags(big_scpacket *packet, PyrSlot *slots, int size);
@@ -763,7 +763,6 @@ void stopAsioThread();
 
 void init_OSC(int port)
 {
-	postfl("init_OSC\n");
 
 #ifdef _WIN32
 	WSAData wsaData;
@@ -986,7 +985,7 @@ int prBootInProcessServer(VMGlobals *g, int numArgsPushed)
 
 	if (!gInternalSynthServer.mWorld) {
 		SetPrintFunc(&vpost);
-		WorldOptions options = kDefaultWorldOptions;
+		WorldOptions options;
 
 		PyrObject *optionsObj = slotRawObject(a);
 		PyrSlot *optionsSlots = optionsObj->slots;

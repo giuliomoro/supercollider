@@ -24,6 +24,7 @@
 
 #include "SC_SynthDef.h"
 #include "HashTable.h"
+#include <boost/filesystem/path.hpp> // path
 
 struct ParamSpec
 {
@@ -35,6 +36,9 @@ struct ParamSpec
 
 typedef HashTable<ParamSpec, Malloc> ParamSpecTable;
 
+/** \note Relevant scsynth code: `GraphDef_Read(World *, char*&, GraphDef*, int32)`
+ *  \note Relevant supernova code: `sc_synthdef::prepare(void)`
+ */
 struct GraphDef
 {
 	NodeDef mNodeDef;
@@ -54,7 +58,7 @@ struct GraphDef
 	struct UnitSpec *mUnitSpecs;
 
 	size_t mWiresAllocSize, mUnitsAllocSize, mCalcUnitsAllocSize;
-	size_t mControlAllocSize, mMapControlsAllocSize, mMapControlRatesAllocSize;
+	size_t mControlAllocSize, mMapControlsAllocSize, mMapControlRatesAllocSize, mAudioMapBusOffsetSize;
 
 	uint32 mNumParamSpecs;
 	ParamSpec *mParamSpecs;
@@ -71,8 +75,8 @@ struct GraphDef
 typedef struct GraphDef GraphDef;
 
 GraphDef* GraphDef_Recv(World *inWorld, char *buffer, GraphDef *inList);
-GraphDef* GraphDef_Load(struct World *inWorld, const char *filename, GraphDef* inList);
-GraphDef* GraphDef_LoadDir(struct World *inWorld, char *dirname, GraphDef* inList);
+GraphDef* GraphDef_Load(struct World *inWorld, const boost::filesystem::path& path, GraphDef* inList);
+GraphDef* GraphDef_LoadDir(struct World *inWorld, const boost::filesystem::path& path, GraphDef* inList);
 GraphDef* GraphDef_LoadGlob(World *inWorld, const char *pattern, GraphDef *inList);
 SCErr GraphDef_Remove(World *inWorld, int32 *inName);
 SCErr GraphDef_DeleteMsg(struct World *inWorld, GraphDef *inDef);

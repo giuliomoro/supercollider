@@ -1,5 +1,5 @@
-Supercollider 3 for linux
-=========================
+Welcome to SuperCollider for Linux!
+===================================
 
 Intro
 -----
@@ -106,7 +106,7 @@ Beaglebone Black) can be found here:
 
     http://supercollider.github.io/development/building
 
-The recommended version of gcc is 4.8
+The minimum required version of gcc is 4.8.
 
 
 Building

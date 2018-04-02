@@ -35,14 +35,20 @@
 #include "ReadWriteMacros.h"
 #include "SC_Prototypes.h"
 #include "SC_CoreAudio.h"
-#include "SC_DirUtils.h"
-
+#include "SC_SequencedCommand.h"
+#include "SC_Errors.h"
+#include "SC_Filesystem.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#include <boost/filesystem/operations.hpp> // recursive_directory_iterator
+#include <boost/filesystem/string_file.hpp> // load_string_file
+
+namespace bfs = boost::filesystem;
 
 extern Malloc gMalloc;
 
@@ -346,7 +352,36 @@ inline static void calcParamSpecs1(GraphDef* graphDef, char*& buffer)
 	
 }
 
+// Allocation code shared between v1 and v2.
+// See https://github.com/supercollider/supercollider/issues/3266
+// TODO: refactor GraphDef to be less brittle.
+static void GraphDef_SetAllocSizes(GraphDef* graphDef)
+{
+	graphDef->mWiresAllocSize = graphDef->mNumWires * sizeof(Wire);
+	graphDef->mUnitsAllocSize = graphDef->mNumUnitSpecs * sizeof(Unit*);
+	graphDef->mCalcUnitsAllocSize = graphDef->mNumCalcUnits * sizeof(Unit*);
+
+	graphDef->mNodeDef.mAllocSize += graphDef->mWiresAllocSize;
+	graphDef->mNodeDef.mAllocSize += graphDef->mUnitsAllocSize;
+	graphDef->mNodeDef.mAllocSize += graphDef->mCalcUnitsAllocSize;
+
+	graphDef->mControlAllocSize = graphDef->mNumControls * sizeof(float);
+	graphDef->mNodeDef.mAllocSize += graphDef->mControlAllocSize;
+
+	graphDef->mMapControlsAllocSize = graphDef->mNumControls * sizeof(float*);
+	graphDef->mNodeDef.mAllocSize += graphDef->mMapControlsAllocSize;
+
+	graphDef->mMapControlRatesAllocSize = graphDef->mNumControls * sizeof(int*);
+	graphDef->mNodeDef.mAllocSize += graphDef->mMapControlRatesAllocSize;
+
+	graphDef->mAudioMapBusOffsetSize = graphDef->mNumControls * sizeof(int32*);
+	graphDef->mNodeDef.mAllocSize += graphDef->mAudioMapBusOffsetSize;
+}
+
 // ver 2
+/** \note Relevant supernova code: \c sc_synthdef::prepare()
+ * \note Relevant v1 code: \c GraphDef_ReadVer1()
+ */
 GraphDef* GraphDef_Read(World *inWorld, char*& buffer, GraphDef* inList, int32 inVersion)
 {
 	int32 name[kSCNodeDefNameLen];
@@ -411,23 +446,7 @@ GraphDef* GraphDef_Read(World *inWorld, char*& buffer, GraphDef* inList, int32 i
 
 	DoBufferColoring(inWorld, graphDef);
 
-	graphDef->mWiresAllocSize = graphDef->mNumWires * sizeof(Wire);
-	graphDef->mUnitsAllocSize = graphDef->mNumUnitSpecs * sizeof(Unit*);
-	graphDef->mCalcUnitsAllocSize = graphDef->mNumCalcUnits * sizeof(Unit*);
-
-	graphDef->mNodeDef.mAllocSize += graphDef->mWiresAllocSize;
-	graphDef->mNodeDef.mAllocSize += graphDef->mUnitsAllocSize;
-	graphDef->mNodeDef.mAllocSize += graphDef->mCalcUnitsAllocSize;
-
-	graphDef->mControlAllocSize = graphDef->mNumControls * sizeof(float);
-	graphDef->mNodeDef.mAllocSize += graphDef->mControlAllocSize;
-
-	graphDef->mMapControlsAllocSize = graphDef->mNumControls * sizeof(float*);
-	graphDef->mNodeDef.mAllocSize += graphDef->mMapControlsAllocSize;
-
-	graphDef->mMapControlRatesAllocSize = graphDef->mNumControls * sizeof(int*);
-	graphDef->mNodeDef.mAllocSize += graphDef->mMapControlRatesAllocSize;
-
+	GraphDef_SetAllocSizes(graphDef);
 
 	graphDef->mNext = inList;
 	graphDef->mRefCount = 1;
@@ -506,23 +525,7 @@ GraphDef* GraphDef_ReadVer1(World *inWorld, char*& buffer, GraphDef* inList, int
 
 	DoBufferColoring(inWorld, graphDef);
 
-	graphDef->mWiresAllocSize = graphDef->mNumWires * sizeof(Wire);
-	graphDef->mUnitsAllocSize = graphDef->mNumUnitSpecs * sizeof(Unit*);
-	graphDef->mCalcUnitsAllocSize = graphDef->mNumCalcUnits * sizeof(Unit*);
-
-	graphDef->mNodeDef.mAllocSize += graphDef->mWiresAllocSize;
-	graphDef->mNodeDef.mAllocSize += graphDef->mUnitsAllocSize;
-	graphDef->mNodeDef.mAllocSize += graphDef->mCalcUnitsAllocSize;
-
-	graphDef->mControlAllocSize = graphDef->mNumControls * sizeof(float);
-	graphDef->mNodeDef.mAllocSize += graphDef->mControlAllocSize;
-
-	graphDef->mMapControlsAllocSize = graphDef->mNumControls * sizeof(float*);
-	graphDef->mNodeDef.mAllocSize += graphDef->mMapControlsAllocSize;
-
-	graphDef->mMapControlRatesAllocSize = graphDef->mNumControls * sizeof(int*);
-	graphDef->mNodeDef.mAllocSize += graphDef->mMapControlRatesAllocSize;
-
+	GraphDef_SetAllocSizes(graphDef);
 
 	graphDef->mNext = inList;
 	graphDef->mRefCount = 1;
@@ -560,8 +563,6 @@ void GraphDef_Define(World *inWorld, GraphDef *inList)
 	}
 }
 
-#include "SC_SequencedCommand.h"
-#include "SC_Errors.h"
 SCErr GraphDef_Remove(World *inWorld, int32 *inName)
 {
 	GraphDef* graphDef = World_GetGraphDef(inWorld, inName);
@@ -604,13 +605,12 @@ SCErr GraphDef_DeleteMsg(World *inWorld, GraphDef *inDef)
 	packet.addtag('s');
 	packet.adds((char*)inDef->mNodeDef.mName);
 
-	ReplyAddress *users = inWorld->hw->mUsers;
-	int numUsers = inWorld->hw->mNumUsers;
-	for (int i=0; i<numUsers; ++i) {
-		SCErr err = SendReplyCmd_d_removed(inWorld, packet.size(), packet.data(), users+i);
-		if(err!=kSCErr_None)
+	for (auto addr : *inWorld->hw->mUsers) {
+		SCErr const err = SendReplyCmd_d_removed(inWorld, packet.size(), packet.data(), &addr);
+		if (err != kSCErr_None)
 			return err;
 	}
+
 	return kSCErr_None;
 }
 
@@ -630,92 +630,80 @@ GraphDef* GraphDef_Recv(World *inWorld, char *buffer, GraphDef *inList)
 
 GraphDef* GraphDef_LoadGlob(World *inWorld, const char *pattern, GraphDef *inList)
 {
-	SC_GlobHandle* glob = sc_Glob(pattern);
-	if (!glob) return inList;
+	SC_Filesystem::Glob* glob = SC_Filesystem::makeGlob(pattern);
+	if (!glob)
+		return inList;
 
-	const char* filename;
-	while ((filename = sc_GlobNext(glob)) != 0) {
-		int len = strlen(filename);
-		if (strncmp(filename+len-9, ".scsyndef", 9)==0) {
-			inList = GraphDef_Load(inWorld, filename, inList);
+	bfs::path path;
+	while (!(path = SC_Filesystem::globNext(glob)).empty()) {
+		if (path.extension() == ".scsyndef") {
+			inList = GraphDef_Load(inWorld, path, inList);
 		}
 		// why? <sk>
-		GraphDef_Load(inWorld, filename, inList);
+		GraphDef_Load(inWorld, path, inList);
 	}
 
-	sc_GlobFree(glob);
+	SC_Filesystem::freeGlob(glob);
 	return inList;
 }
 
-GraphDef* GraphDef_Load(World *inWorld, const char *filename, GraphDef *inList)
+GraphDef* GraphDef_Load(World *inWorld, const bfs::path& path, GraphDef *inList)
 {
-	FILE *file = fopen(filename, "rb");
-
-	if (!file) {
-		scprintf("*** ERROR: can't fopen '%s'\n", filename);
-		return inList;
-	}
-
-	fseek(file, 0, SEEK_END);
-	int size = ftell(file);
-	char *buffer = (char*)malloc(size);
-	if (!buffer) {
-		scprintf("*** ERROR: can't malloc buffer size %d\n", size);
-		fclose(file);
-		return inList;
-	}
-	fseek(file, 0, SEEK_SET);
-
-	size_t readSize = fread(buffer, 1, size, file);
-	fclose(file);
-
-	if (readSize!= size) {
-		scprintf("*** ERROR: invalid fread\n", size);
-		free(buffer);
-		return inList;
-	}
-
 	try {
-		inList = GraphDefLib_Read(inWorld, buffer, inList);
-	} catch (std::exception& exc) {
-		scprintf("exception in GrafDef_Load: %s\n", exc.what());
-		scprintf("while reading file '%s'\n", filename);
+		std::string file_contents;
+		bfs::load_string_file(path, file_contents);
+		inList = GraphDefLib_Read(inWorld, &file_contents[0], inList);
+	} catch (const std::exception& e) {
+		scprintf("exception in GraphDef_Load: %s\n", e.what());
+		const std::string path_utf8_str = SC_Codecvt::path_to_utf8_str(path);
+		scprintf("while reading file: '%s'", path_utf8_str.c_str());
 	} catch (...) {
 		scprintf("unknown exception in GrafDef_Load\n");
-		scprintf("while reading file '%s'\n", filename);
+		const std::string path_utf8_str = SC_Codecvt::path_to_utf8_str(path);
+		scprintf("while reading file '%s'\n", path_utf8_str.c_str());
 	}
-
-	free(buffer);
 
 	return inList;
 }
 
-GraphDef* GraphDef_LoadDir(World *inWorld, char *dirname, GraphDef *inList)
+GraphDef* GraphDef_LoadDir(World *inWorld, const bfs::path& dirname, GraphDef *inList)
 {
-	SC_DirHandle *dir = sc_OpenDir(dirname);
-	if (!dir) {
-		scprintf("*** ERROR: open directory failed '%s'\n", dirname);
+	boost::system::error_code ec;
+	bfs::recursive_directory_iterator rditer(dirname, bfs::symlink_option::recurse, ec);
+
+	if (ec) {
+		scprintf(
+			"*** ERROR: open directory failed '%s'\n",
+			SC_Codecvt::path_to_utf8_str(dirname).c_str()
+		);
 		return inList;
 	}
 
-	for (;;) {
-		char diritem[MAXPATHLEN];
-		bool skipItem = false;
-		bool validItem = sc_ReadDir(dir, dirname, diritem, skipItem);
-		if (!validItem) break;
-		if (skipItem) continue;
+	while (rditer != bfs::end(rditer)) {
+		const bfs::path path = *rditer;
 
-		if (sc_DirectoryExists(diritem)) {
-			inList = GraphDef_LoadDir(inWorld, diritem, inList);
+		if (bfs::is_directory(path)) {
+			if (SC_Filesystem::instance().shouldNotCompileDirectory(path))
+				rditer.no_push();
+			else
+				; // do nothing; recursion will happen automatically
+		} else if (path.extension() == ".scsyndef") { // ordinary file
+			inList = GraphDef_Load(inWorld, path, inList);
 		} else {
-			int dnamelen = strlen(diritem);
-			if (strncmp(diritem+dnamelen-9, ".scsyndef", 9) == 0) {
-				inList = GraphDef_Load(inWorld, diritem, inList);
-			}
+			// ignore file, wasn't a synth def
+		}
+
+		rditer.increment(ec);
+		if (ec) {
+			scprintf(
+				"*** ERROR: Could not iterate on '%s': %s\n",
+				SC_Codecvt::path_to_utf8_str(path).c_str(),
+				ec.message().c_str()
+			);
+			return inList;
 		}
 	}
 
-	sc_CloseDir(dir);
 	return inList;
 }
 
@@ -847,7 +835,14 @@ inline uint32 BufColorAllocator::alloc(uint32 count)
 		outIndex = nextIndex++;
 	}
 	if (outIndex >= refsMaxSize) {
-		refs = (int16*)realloc(refs, refsMaxSize*2*sizeof(int16));
+		int16 * tmprefs = (int16*)realloc(refs, refsMaxSize*2*sizeof(int16));
+		if ( tmprefs == NULL ) {
+			free(refs);
+			refs = NULL;
+			throw std::runtime_error("buffer coloring error: reallocation failed.");
+		} else {
+			refs = tmprefs;
+		}
 		memset(refs + refsMaxSize, 0, refsMaxSize*sizeof(int16));
 		refsMaxSize *= 2;
 	}
@@ -860,7 +855,14 @@ inline bool BufColorAllocator::release(int inIndex)
 	if (refs[inIndex] == 0) return false;
 	if (--refs[inIndex] == 0) {
 		if (stackPtr >= stackMaxSize) {
-			stack = (int16*)realloc(stack, stackMaxSize*2*sizeof(int16));
+			int16* tmpstack = (int16*)realloc(stack, stackMaxSize*2*sizeof(int16));
+			if ( tmpstack == NULL ) {
+				free(stack);
+				stack = NULL;
+				throw std::runtime_error("buffer coloring error: reallocation during release failed.");
+			} else {
+				stack = tmpstack;
+			}
 			memset(stack + stackMaxSize, 0, stackMaxSize*sizeof(int16));
 			stackMaxSize *= 2;
 		}

@@ -37,6 +37,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits>
+#include <functional>
 
 #if defined(__APPLE__) || defined(__linux__)
 # include <pthread.h>
@@ -228,7 +229,6 @@ int64 gHostStartNanos = 0;
 int64 gElapsedOSCoffset = 0;
 
 const int32 kSECONDS_FROM_1900_to_1970 = (int32)2208988800UL; /* 17 leap years */
-const double fSECONDS_FROM_1900_to_1970 = 2208988800.; /* 17 leap years */
 
 static void syncOSCOffsetWithTimeOfDay();
 void resyncThread();

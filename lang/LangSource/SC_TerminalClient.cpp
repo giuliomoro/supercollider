@@ -38,6 +38,7 @@
 # include <io.h>
 # include <windows.h>
 # include <ioapiset.h>
+# include <iostream> // for cerr
 #endif
 
 #ifdef __APPLE__
@@ -56,11 +57,17 @@
 #include "PyrLexer.h"
 #include "PyrSlot.h"
 #include "VMGlobals.h"
-#include "SC_DirUtils.h"   // for gIdeName
+#include "SC_Filesystem.hpp"
 #include "SC_LanguageConfig.hpp"
 #include "SC_Version.hpp"
 
+#include <boost/filesystem/operations.hpp>
+
 static FILE* gPostDest = stdout;
+
+#ifdef _WIN32
+static UINT gOldCodePage; // for remembering the old codepage when we switch to UTF-8
+#endif
 
 SC_TerminalClient::SC_TerminalClient(const char* name)
 	: SC_LanguageClient(name),
@@ -129,7 +136,7 @@ void SC_TerminalClient::printUsage()
 			memGrowBuf,
 			memSpaceBuf,
 			opt.mPort,
-			gIdeName
+			SC_Filesystem::instance().getIdeName().c_str()
 		);
 }
 
@@ -190,7 +197,7 @@ bool SC_TerminalClient::parseOptions(int& argc, char**& argv, Options& opt)
 				goto optArgExpected;
 				break;
 			case 'i':
-				gIdeName = optarg;
+				SC_Filesystem::instance().setIdeName(optarg);
 				break;
 			case 'a':
 				opt.mStandalone = true;
@@ -250,11 +257,16 @@ int SC_TerminalClient::run(int argc, char** argv)
 
 	// read library configuration file
 	if (opt.mLibraryConfigFile)
-		SC_LanguageConfig::setConfigFile(opt.mLibraryConfigFile);
+		SC_LanguageConfig::setConfigPath(opt.mLibraryConfigFile);
 	SC_LanguageConfig::readLibraryConfig(opt.mStandalone);
 
 	// initialize runtime
 	initRuntime(opt);
+
+	// Create config directory so that it can be used by Quarks, etc. See #2919.
+	if (!opt.mStandalone && !opt.mLibraryConfigFile)
+		boost::filesystem::create_directories(
+			SC_Filesystem::instance().getDirectory(SC_Filesystem::DirName::UserConfig));
 
 	// startup library
 	compileLibrary(opt.mStandalone);
@@ -615,7 +627,7 @@ void SC_TerminalClient::pushCmdLine( const char *newData, size_t size)
 void SC_TerminalClient::initInput()
 {
 #ifdef HAVE_READLINE
-	if (strcmp(gIdeName, "none") == 0) {
+	if (!SC_Filesystem::instance().usingIde()) {
 		// Other clients (emacs, vim, ...) won't want to interact through rl
 		mUseReadline = true;
 		return;
@@ -703,6 +715,13 @@ SCLANG_DLLEXPORT SC_LanguageClient * createLanguageClient(const char * name)
 	SC::Apple::disableAppNap();
 #endif
 
+#ifdef _WIN32
+	// set codepage to UTF-8
+	gOldCodePage = GetConsoleOutputCP();
+	if (!SetConsoleOutputCP(65001))
+		std::cerr << "WARNING: could not set codepage to UTF-8" << std::endl;
+#endif
+
 #ifdef SC_QT
 	return new QtCollider::LangClient(name);
 #else
@@ -712,5 +731,9 @@ SCLANG_DLLEXPORT SC_LanguageClient * createLanguageClient(const char * name)
 
 SCLANG_DLLEXPORT void destroyLanguageClient(class SC_LanguageClient * languageClient)
 {
+#ifdef _WIN32
+	// reset codepage from UTF-8
+	SetConsoleOutputCP(gOldCodePage);
+#endif
 	delete languageClient;
 }
