@@ -338,35 +338,35 @@ void SC_BelaDriver::staticMAudioSyncSignal(void*){
 
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
-    BelaInitSettings settings;
-    Bela_defaultSettings(&settings);
-    settings.setup = sc_belaSetup;
-    settings.render = sc_belaRender;
-    settings.interleave = 0;
-    settings.uniformSampleRate = 1;
-    settings.analogOutputsPersist = 0;
+	BelaInitSettings* settings = Bela_InitSettings_alloc();
+	Bela_defaultSettings(settings);
+	settings->setup = sc_belaSetup;
+	settings->render = sc_belaRender;
+	printf("sc_belaRender: %p\n", sc_belaRender);
+	settings->interleave = 0;
+	settings->uniformSampleRate = 1;
+	settings->analogOutputsPersist = 0;
 
 	if(mPreferredHardwareBufferFrameSize){
-		settings.periodSize = mPreferredHardwareBufferFrameSize;
+		settings->periodSize = mPreferredHardwareBufferFrameSize;
 	}
-	if(settings.periodSize != mSCBufLength) {
+	if(settings->periodSize != mSCBufLength) {
 		scprintf("Warning in SC_BelaDriver::DriverSetup(): hardware buffer size (%i) different from SC audio buffer size (%i). Changed the hardware buffer size to be equal to the SC audio buffer size .\n",
-            settings.periodSize, mSCBufLength);
-        settings.periodSize = mSCBufLength;
-        
+		settings->periodSize, mSCBufLength);
+		settings->periodSize = mSCBufLength;
 	}
 	// note that Bela doesn't give us an option to choose samplerate, since it's baked-in.
 	// This can be retrieved in sc_belaSetup()
 	
 	// configure the number of analog channels - this will determine their internal samplerate
-	settings.useAnalog = 0;
+	settings->useAnalog = 0;
 	
     // explicitly requested number of analog channels
     int numAnalogIn = mWorld->mBelaAnalogInputChannels;
     int numAnalogOut = mWorld->mBelaAnalogOutputChannels;
 
-    int extraAudioIn = mWorld->mNumInputs - settings.numAudioInChannels;
-    int extraAudioOut = mWorld->mNumOutputs - settings.numAudioOutChannels;
+    int extraAudioIn = mWorld->mNumInputs - settings->numAudioInChannels;
+    int extraAudioOut = mWorld->mNumOutputs - settings->numAudioOutChannels;
     // if we need more audio channels than there actually are audio 
     // channels, make sure we have some extra analogs
     if(extraAudioIn > 0)
@@ -404,65 +404,65 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
         numAnalogIn = numAnalogOut;
         printf("Number of analog input channels must match number of analog outputs. Using %u for both\n", numAnalogIn);
     }
-    settings.numAnalogInChannels = numAnalogOut;
-    settings.numAnalogOutChannels = numAnalogIn;
+    settings->numAnalogInChannels = numAnalogOut;
+    settings->numAnalogOutChannels = numAnalogIn;
 
-    if ( settings.numAnalogInChannels > 0 || settings.numAnalogOutChannels > 0 ){
-        settings.useAnalog = 1;
+    if ( settings->numAnalogInChannels > 0 || settings->numAnalogOutChannels > 0 ){
+        settings->useAnalog = 1;
     }
 
     // enable the audio expander capelet for the first few "analog as audio" channels
 	// inputs and ...
     for(int n = 0; n < extraAudioIn; ++n )
     {
-        printf("Using analog in %d as audio in %d\n", n, n + settings.numAudioInChannels);
-        settings.audioExpanderInputs |= (1 << n);
+        printf("Using analog in %d as audio in %d\n", n, n + settings->numAudioInChannels);
+        settings->audioExpanderInputs |= (1 << n);
     }
 	
 	// ... outputs
     for(int n = 0; n < extraAudioOut; ++n )
     {
-        printf("Using analog out %d as audio out %d\n", n, n + settings.numAudioOutChannels);
-        settings.audioExpanderOutputs |= (1 << n);
+        printf("Using analog out %d as audio out %d\n", n, n + settings->numAudioOutChannels);
+        settings->audioExpanderOutputs |= (1 << n);
     }
 
 	// configure the number of digital channels
-	settings.useDigital = 0;
+	settings->useDigital = 0;
 	
 	if ( mWorld->mBelaDigitalChannels > 0 ){
-	  settings.numDigitalChannels = mWorld->mBelaDigitalChannels;
-	  settings.useDigital = 1;
+	  settings->numDigitalChannels = mWorld->mBelaDigitalChannels;
+	  settings->useDigital = 1;
 	}
 	if ( (mWorld->mBelaHeadphoneLevel >= -63.5) && ( mWorld->mBelaHeadphoneLevel <= 0. )) {             //headphone output level (0dB max; -63.5dB min)
-	  settings.headphoneLevel = mWorld->mBelaHeadphoneLevel;
+	  settings->headphoneLevel = mWorld->mBelaHeadphoneLevel;
 	}
 	if ( (mWorld->mBelaPGAGainLeft >= 0)  && ( mWorld->mBelaPGAGainLeft <= 59.5) ){ // (0db min; 59.5db max)
-	  settings.pgaGain[0] = mWorld->mBelaPGAGainLeft;
+	  settings->pgaGain[0] = mWorld->mBelaPGAGainLeft;
 	}
 	if ( (mWorld->mBelaPGAGainRight >= 0) && ( mWorld->mBelaPGAGainRight <= 59.5)){// (0db min; 59.5db max)
-	  settings.pgaGain[1] = mWorld->mBelaPGAGainRight;
+	  settings->pgaGain[1] = mWorld->mBelaPGAGainRight;
 	}
 	
 	if ( mWorld->mBelaSpeakerMuted ){
-            settings.beginMuted = 1;
+            settings->beginMuted = 1;
         } else {
-            settings.beginMuted = 0;
+            settings->beginMuted = 0;
         }
         if ( (mWorld->mBelaDACLevel >= -63.5) && ( mWorld->mBelaDACLevel <= 0. )) {             // (0dB max; -63.5dB min)
-            settings.dacLevel = mWorld->mBelaDACLevel;
+            settings->dacLevel = mWorld->mBelaDACLevel;
         }
         if ( (mWorld->mBelaADCLevel >= -12) && ( mWorld->mBelaADCLevel <= 0. )) {             // (0dB max; -12dB min)
-            settings.adcLevel = mWorld->mBelaADCLevel;
+            settings->adcLevel = mWorld->mBelaADCLevel;
         }
         
-        settings.numMuxChannels = mWorld->mBelaNumMuxChannels;
+        settings->numMuxChannels = mWorld->mBelaNumMuxChannels;
         
         if ( (mWorld->mBelaPRU == 0) || (mWorld->mBelaPRU == 1) ){
-            settings.pruNumber = mWorld->mBelaPRU;
+            settings->pruNumber = mWorld->mBelaPRU;
         }
 
-	scprintf("SC_BelaDriver: >>DriverSetup - Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", settings.pruNumber, settings.numAnalogInChannels, settings.numAnalogOutChannels, settings.numDigitalChannels, settings.numMuxChannels, settings.headphoneLevel, settings.pgaGain[0],settings.pgaGain[1], settings.dacLevel, settings.adcLevel );
-        if ( settings.beginMuted == 1 ){
+	scprintf("SC_BelaDriver: >>DriverSetup - Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", settings->pruNumber, settings->numAnalogInChannels, settings->numAnalogOutChannels, settings->numDigitalChannels, settings->numMuxChannels, settings->headphoneLevel, settings->pgaGain[0],settings->pgaGain[1], settings->dacLevel, settings->adcLevel );
+        if ( settings->beginMuted == 1 ){
             scprintf( "Speakers are muted.\n" );
         } else {
             scprintf( "Speakers are not muted.\n" );
@@ -471,7 +471,7 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	// Initialise the PRU audio device. This function prepares audio rendering in Bela. It should be called from main() sometime
 	// after command line option parsing has finished. It will initialise the rendering system, which
 	// in the process will result in a call to the user-defined setup() function.
-	if(Bela_initAudio(&settings, this) != 0) {
+	if(Bela_initAudio(settings, this) != 0) {
 		scprintf("Error in SC_BelaDriver::DriverSetup(): unable to initialise audio\n");
 		return false;
 	}
@@ -481,8 +481,9 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 		exit(1);
 	}
 
-	*outNumSamples = settings.periodSize;
+	*outNumSamples = settings->periodSize;
 	*outSampleRate = 44100.0;		// This is fixed in Bela at the moment
+	Bela_InitSettings_free(settings);
 
 	// Set up interrupt handler to catch Control-C and SIGTERM
 	signal(SIGINT, sc_belaSignal);
