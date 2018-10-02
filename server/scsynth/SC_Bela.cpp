@@ -136,11 +136,13 @@ SC_BelaDriver::~SC_BelaDriver()
 	mBelaDriverInstance = 0;
 }
 
+static float gBelaSampleRate;
 // Return true on success; returning false halts the program.
 bool sc_belaSetup(BelaContext* belaContext, void* userData)
 {
     // cast void pointer
     //SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
+	gBelaSampleRate = belaContext->audioSampleRate;
 	return true;
 }
 
@@ -482,7 +484,7 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	}
 
 	*outNumSamples = settings->periodSize;
-	*outSampleRate = 44100.0;		// This is fixed in Bela at the moment
+	*outSampleRate = gBelaSampleRate;
 	Bela_InitSettings_free(settings);
 
 	// Set up interrupt handler to catch Control-C and SIGTERM
