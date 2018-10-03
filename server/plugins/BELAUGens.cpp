@@ -615,13 +615,13 @@ void DigitalOut_next_a_once(DigitalOut *unit, int inNumSamples)
 	// read input
 	newinput = in[n];
 	if ( newinput > 0.5 ){ 
-	  digitalWriteOnce(context, n, pinid, GPIO_HIGH );
+	  digitalWriteOnce(context, n, pinid, 1 );
 	}
 	else {
-	  digitalWriteOnce(context, n, pinid, GPIO_LOW );	
+	  digitalWriteOnce(context, n, pinid, 0 );
 	}
 		 // else if ( lastOut == 1 ) {
- // 	  digitalWrite(context, n, pinid, GPIO_LOW );
+ // 	  digitalWrite(context, n, pinid, 0 );
  // 	}
   }
   //unit->mLastOut = lastOut;
@@ -645,11 +645,11 @@ void DigitalOut_next_a(DigitalOut *unit, int inNumSamples)
 	if ( newinput > 0.5 ){ 
             if (lastOut == 0) {
                 lastOut = 1;
-                digitalWrite(context, n, pinid, GPIO_HIGH );
+                digitalWrite(context, n, pinid, 1 );
             }
 	} else if ( lastOut == 1 ) {
           lastOut = 0;
-	  digitalWrite(context, n, pinid, GPIO_LOW );
+	  digitalWrite(context, n, pinid, 0 );
 	}
   }
   unit->mLastOut = lastOut;
@@ -668,12 +668,12 @@ void DigitalOut_next_k(DigitalOut *unit, int inNumSamples)
   if ( in > 0.5 ){ 
     if (lastOut == 0) {
         lastOut = 1;
-        digitalWrite(context, 0, pinid, GPIO_HIGH );
+        digitalWrite(context, 0, pinid, 1 );
     }
   } 
   else if ( lastOut == 1 ) {
     lastOut = 0;
-    digitalWrite(context, 0, pinid, GPIO_LOW );
+    digitalWrite(context, 0, pinid, 0 );
   }
   unit->mLastOut = lastOut;
 }
@@ -1031,9 +1031,9 @@ void DigitalIO_next_akka_once(DigitalIO *unit, int inNumSamples)
     } else { // digital write
         pinModeOnce( context, n, newpin, OUTPUT );
         if ( newinput > 0.5 ){ 
-            newDigOut = GPIO_HIGH; 
+            newDigOut = 1;
         } else { 
-	    newDigOut = GPIO_LOW;  
+	    newDigOut = 0;
 	}
         digitalWriteOnce(context, n, newpin, newDigOut);
     }
@@ -1078,9 +1078,9 @@ void DigitalIO_next_ak(DigitalIO *unit, int inNumSamples)
         pinMode( context, 0, newpin, OUTPUT );
         for(unsigned int n = 0; n < inNumSamples; n++) {
             if ( in > 0.5 ){ 
-                newDigOut = GPIO_HIGH; 
+                newDigOut = 1;
             } else { 
-                newDigOut = GPIO_LOW;  
+                newDigOut = 0;
             }
             digitalWriteOnce(context, n, newpin, newDigOut);
             // always write to the output of the UGen
@@ -1116,9 +1116,9 @@ void DigitalIO_next_kk(DigitalIO *unit, int inNumSamples)
     } else {  
         pinMode( context, 0, pinid, OUTPUT );
         if ( in > 0.5 ){ 
-            newDigOut = GPIO_HIGH; 
+            newDigOut = 1;
         } else { 
-	    newDigOut = GPIO_LOW;  
+	    newDigOut = 0;
         }
 	digitalWrite(context, 0, pinid, newDigOut);
     }
@@ -1166,9 +1166,9 @@ void DigitalIO_next(DigitalIO *unit, int inNumSamples)
   // 	    pinModeOnce( context, n, newpin, OUTPUT );
 	    pinMode( context, n, newpin, OUTPUT );
 	    if ( newinput > 0.5 ){ 
-	      newinputInt = GPIO_HIGH; 
+	      newinputInt = 1;
 	    } else { 
-	      newinputInt = GPIO_LOW;  
+	      newinputInt = 0;
 	    }
   // 	    digitalWriteOnce(context, n, newpin, newinputInt);
 	    digitalWrite(context, n, newpin, newinputInt);
