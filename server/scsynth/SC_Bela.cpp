@@ -328,7 +328,8 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext *belaContext)
 	}
 
 	// this avoids Xenomai mode switches in the audio thread ...
-	Bela_scheduleAuxiliaryTask(mAudioSyncSignalTask);
+	staticMAudioSync->Signal();
+	//Bela_scheduleAuxiliaryTask(mAudioSyncSignalTask);
 }
 
 void SC_BelaDriver::staticMAudioSyncSignal(void*){

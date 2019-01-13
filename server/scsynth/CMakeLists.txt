@@ -101,6 +101,10 @@ if (FFT_GREEN)
 	list(APPEND scsynth_sources ../../common/fftlib.c)
 endif()
 
+if (XENOMAI_FOUND)
+	list(APPEND scsynth_sources ../../common/XenomaiLock.cpp)
+	message(STATUS APPENDING: ${scsynth_sources})
+endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/include/common
                     ${CMAKE_SOURCE_DIR}/common
