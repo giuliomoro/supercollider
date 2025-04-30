@@ -115,31 +115,14 @@ SC_BelaDriver::~SC_BelaDriver()
 {
 	// Clean up any resources allocated for audio
 	Bela_cleanupAudio();
-       	scprintf("SC_BelaDriver: >>Bela_cleanupAudio\n");
 	--countInstances;
 }
 
-// setup() is called once before the audio rendering starts.
-// Use it to perform any initialisation and allocation which is dependent
-// on the period size or sample rate.
-//
-// userData holds an opaque pointer to a data structure that was passed
-// in from the call to initAudio().
-//
 // Return true on success; returning false halts the program.
 bool sc_belaSetup(BelaContext* belaContext, void* userData)
 {
-// 	if(userData == 0){
-// 		scprintf("SC_BelaDriver: error, setup() got no user data\n");
-// 		return false;
-// 	}
-// 	
-// 	// cast void pointer
-// 	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
-// 	if ( (belaContext->analogInChannels > 0) || (belaContext->analogOutChannels > 0) ){
-// 	  belaDriver->setAudioFramesPerAnalogFrame( belaContext->audioFrames / belaContext->analogFrames );
-// 	}
-
+    // cast void pointer
+    //SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
 	return true;
 }
 
@@ -330,25 +313,13 @@ void SC_BelaDriver::staticMAudioSyncSignal(void*){
 
 bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 {
-    SetPrintFunc((PrintFunc)rt_vprintf);
-<<<<<<< HEAD
-=======
-	scprintf("SC_BelaDriver: >>DriverSetup\n");
->>>>>>> BELA: scsynth: manage the analog input and output channels
 	BelaInitSettings settings;
-<<<<<<< HEAD
     Bela_defaultSettings(&settings);
+    settings.setup = sc_belaSetup;
     settings.render = sc_belaRender;
     settings.interleave = 0;
     settings.uniformSampleRate = 1;
     settings.analogOutputsPersist = 0;
-=======
-	Bela_defaultSettings(&settings);	// This function should be called in main() before parsing any command-line arguments. It
-				// sets default values in the data structure which specifies the BeagleRT settings, including
-				// frame sizes, numbers of channels, volume levels and other parameters.
-    settings.setup = sc_belaSetup;
-    settings.render = sc_belaRender;
->>>>>>> BELA: scsynth: small fixes
 
 	if(mPreferredHardwareBufferFrameSize){
 		settings.periodSize = mPreferredHardwareBufferFrameSize;
@@ -365,19 +336,17 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	
 	if ( mWorld->mBelaAnalogInputChannels > 0 ){
 	  if ( mWorld->mBelaAnalogInputChannels < 5 ){ // always use a minimum of 4 analog channels, as we cannot read analog I/O faster than audio rate	    
-	    settings.numAnalogInChannels = 4; // analog rate == audio rate
+	    settings.numAnalogInChannels = 4; // actual analog rate == audio rate
 	  } else {
-	    settings.numAnalogInChannels = 8; // analog rate == audie rate / 2
+	    settings.numAnalogInChannels = 8; // actual analog rate == audio rate / 2
 	  }
-// 	} else {
-// 	  settings.numAnalogInChannels = 0;
 	}
 	
 	if ( mWorld->mBelaAnalogOutputChannels > 0 ){
 	  if ( mWorld->mBelaAnalogOutputChannels < 5 ){ // always use a minimum of 4 analog channels, as we cannot read analog I/O faster than audio rate	    
-	    settings.numAnalogOutChannels = 4; // analog rate == audio rate
+	    settings.numAnalogOutChannels = 4; // actual analog rate == audio rate
 	  } else {
-	    settings.numAnalogOutChannels = 8; // analog rate == audio rate / 2
+	    settings.numAnalogOutChannels = 8; // actual analog rate == audio rate / 2
 	  }
 	} else {
 	  settings.numAnalogOutChannels = 0;
@@ -393,7 +362,25 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
     if ( settings.numAnalogInChannels > 0 ){
         settings.useAnalog = 1;
     }
+
+    // if we need more audio channels than there actually are audio 
+    // channels, we enable the audio expander capelet for the first
+    // few analog channels
+
+    int extraAudioIn = mWorld->mNumInputs - settings.numAudioInChannels;
+    for(int n = 0; n < extraAudioIn; ++n )
+    {
+        printf("Using analog in %d as audio in %d\n", n, n + settings.numAudioInChannels);
+        settings.audioExpanderInputs |= (1 << n);
+    }
 	
+    int extraAudioOut = mWorld->mNumOutputs - settings.numAudioOutChannels;
+    for(int n = 0; n < extraAudioOut; ++n )
+    {
+        scprintf("Using analog out %d as audio out %d\n", n, n + settings.numAudioOutChannels);
+        settings.audioExpanderOutputs |= (1 << n);
+    }
+
 	// configure the number of digital channels
 	settings.useDigital = 0;
 	
@@ -452,17 +439,17 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 
 bool SC_BelaDriver::DriverStart()
 {
-	scprintf("SC_BelaDriver: >>DriverStart\n");
-	if(Bela_startAudio()) {
-		scprintf("Error in SC_BelaDriver::DriverStart(): unable to start real-time audio\n");
-		return false;
-	}
-	return true;
+    SetPrintFunc((PrintFunc)rt_vprintf); // Use Xenomai's realtime-friendly printing function
+    rt_print_auto_init(1); // Make sure the buffers for rt_vprintf are actually initialized.
+    if(Bela_startAudio()) {
+        scprintf("Error in SC_BelaDriver::DriverStart(): unable to start real-time audio\n");
+        return false;
+    }
+    return true;
 }
 
 bool SC_BelaDriver::DriverStop()
 {
 	Bela_stopAudio();
-	scprintf("SC_BelaDriver: >>DriverStop\n");
 	return true;
 }
